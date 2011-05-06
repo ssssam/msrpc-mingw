@@ -59,9 +59,9 @@ int main(int   argc,
 	super_exception_filter = SetUnhandledExceptionFilter (rpc_exception_filter);
 
 	status = RpcStringBindingCompose (NULL,
-	                                  "ncacn_np" /* named pipes protocol */,
+	                                  "ncalrpc" /* named pipes protocol */,
 	                                  NULL,
-	                                  "\\pipe\\hello",
+	                                  "hello-world",
 	                                  NULL,
 	                                  &string_binding);
 

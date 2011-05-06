@@ -25,9 +25,9 @@ int main(int   argc,
          char *argv[]) {
 	RPC_STATUS status;
 
-	status = RpcServerUseProtseqEp ("ncacn_np",  /* named pipes protocol */
+	status = RpcServerUseProtseqEp ("ncalrpc",  /* local RPC */
 	                                RPC_C_LISTEN_MAX_CALLS_DEFAULT,
-	                                "\\pipe\\hello",
+	                                "hello-world",
 	                                NULL  /* FIXME: access control */);
 
 	if (status) exit (status);
