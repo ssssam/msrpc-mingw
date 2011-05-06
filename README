@@ -1,0 +1,257 @@
+Done
+----
+
+* Download MinGW installer 20110316:
+   http://sourceforge.net/projects/mingw/files/Automated%20MinGW%20Installer/mingw-get-inst/mingw-get-inst-20110316/mingw-get-inst-20110316.exe/download
+
+  -> latest catalogue
+  -> c:\tools\mingw
+  Include: C++, MSYS
+
+* Extra packages:
+    msys-wget [1.12-1-msys-1.0.13]
+    msys-vim [7.3-2-msys-1.0.16]
+
+* Install Python 3.2:
+    http://python.org/ftp/python/3.2/python-3.2.msi
+
+  -> c:\tools\python
+
+* Install Windows SDK:
+    http://www.microsoft.com/downloads/en/details.aspx?FamilyID=c17ba869-9671-4330-a63e-1fd44e0e2505
+
+  Components you need:
+    Developer Tools/Windows Development Tools/Win32 Development Tools
+    Developer Tools/Visual C++ Compilers
+
+  Things you actually need from this:
+    Bin/uuidgen.exe (only to generate an ID for the interface)
+    Bin/midl.exe (to generate C code to drive interface)
+    Bin/cl.exe (needed for midl.exe)
+
+
+export PATH=/c/tools/python:/c/Program\ Files/Microsoft\ Visual\ Studio\ 9.0/Common7/IDE:/c/Program\ Files/Microsoft\ Visual\ Studio\ 9.0/VC/bin:$PATH
+
+
+TODO
+
+* Create msrpc-mingw demo app?
+  tutorial http://msdn.microsoft.com/en-us/library/aa379010%28v=VS.85%29.aspx
+  -> integrate MIDL into the wscript? at least make a 'sed' script to
+     fixup its output for gcc.
+  -> make sure you set up returning a struct/3 strings - that's what moonshot does
+
+
+* Build moonshot-ui and implement windows support
+
+* Blog about this :)
+
+
+To implement MS RPC:
+---------------------
+
+Tutorial: http://msdn.microsoft.com/en-us/library/aa379010%28v=VS.85%29.aspx
+
+To generate interface skeleton:
+  uuidgen -i -ohello.idl
+
+To compile interface:
+  midl -Oi -out build hello.idl
+
+  If you pass -Oic/-Oicf the code requires NdrClientCall2 and NdrServerCall2
+  which are too new to be in the MSYS import library for rpcrt4.dll. It is
+  not trivial to generate our own import library for the dll, although this
+  would be a better solution because -Oi is deprecated. I think the functions
+  are Win2k+.
+  -> http://msdn.microsoft.com/en-us/library/aa367352%28v=VS.85%29.aspx
+
+The output of midl requires editing:
+  extern const => static const wherever you get a warning
+
+
+
+Running-as-a-service
+--------------------
+
+"Interactive services"
+http://msdn.microsoft.com/en-us/library/ms683502%28v=vs.85%29.aspx
+
+  "Services cannot directly interact with a user as of Windows Vista."
+
+Essentially a proper split between daemon and UI is required before we
+can make the app a service. That's not such a problem because we can
+still just run the app on startup and it can provide the RPC service
+anyway.
+
+
+Summary
+--------
+
+List of IPC options: http://msdn.microsoft.com/en-us/library/aa365574%28v=vs.85%29.aspx
+
+Windows IPC options:
+
+  [Named Pipes (data),
+   TCP sockets (data)] < MSRPC (functions & marshalling) < DCOM (interfaces & components)
+
+ie. MSRPC has multiple protocol backends. some are:
+  ncacn_ip_tcp = netbios over TCP/IP
+  ncadg_ip_udp = connectionless UDP/IP
+  ncacn_np     = named pipes (honours SecurityDescriptor)
+  ncalrpc      = local procedure call (honours SecurityDescriptor)
+
+This is a good summary of the protseq options:
+  http://technet.microsoft.com/en-us/library/cc738291(v=ws.10).aspx
+
+The decider: can multiple clients access the server at once?
+  MSRPC - i guess yes (they don't say)
+  TCP sockets - yes
+  Named Pipes - yes 
+
+http://msdn.microsoft.com/en-us/library/aa365590%28v=vs.85%29.aspx
+  "A named pipe is a named, one-way or duplex pipe for communication between
+  the pipe server and one or more pipe clients. All instances of a named pipe
+  share the same pipe name, but each instance has its own buffers and handles,
+  and provides a separate conduit for client/server communication. The use of
+  instances enables multiple pipe clients to use the same named pipe
+  simultaneously."
+
+Do windows sockets have access control? Only on Vista and above ..
+
+Outsiders:
+  Mailslot (mainly a reimplementation of named pipes, supports broadcast)
+  mmap'ed file (MS list it as an option but this is dumb)
+
+Conclusion:
+
+  The 'correct' solution is to use MSRPC. The moonshot-ui runs as a service
+  which will expose its API to apps as a well-known named RPC service
+  (using Microsoft Locator). This works on at least all NT family. Using
+  RpcServerUseProtseqEp (set protocol sequence and endpoint) we can route
+  communication through named pipes or even do direct IPC.
+  RPC also has had a lot of security brainpower put into it:
+
+    http://msdn.microsoft.com/en-us/library/aa379441%28v=VS.85%29.aspx
+
+  The easier solution is to just expose a named pipe. This still allows
+  multiple clients. MSRPC is only a few function calls and the use of the
+  MIDL compiler, however. MIDL could be a problem if we need to cross compile !
+  You can also control user access to named pipes:
+
+    http://msdn.microsoft.com/en-us/library/aa365600%28v=vs.85%29.aspx
+    http://www.blakewatts.com/namedpipepaper.html
+
+DBus on Win32
+-------------
+
+  uses TCP sockets???? Why on earth would they not just use named pipes?
+  or wrap MSRPC (although that would be a nightmare).
+  Would that be possible? I think you would need a new abstraction API and
+  some kind of mental illness :)
+  Seems to be driven by the KDE/Windows camp
+  
+  Havoc talking sense: http://lists.freedesktop.org/archives/dbus/2009-April/011213.html
+  tml recommends named pipes: http://lists.freedesktop.org/archives/dbus/2009-April/011216.html
+
+  The porters really don't understand portability ... and seem to have
+  dogmatically tried to do a cygwin-style port. No idea why (who will
+  use it? - applications are the only possible consumers of dbus on
+  windows)
+
+IPC without COM or RPC
+----------------------
+
+* http://msdn.microsoft.com/en-us/library/aa365574%28v=vs.85%29.aspx
+
+Our requirements
+1. Only need to communicate on local computer
+3. Clients should automatically locate the server
+4. A client library is used to contact the server
+5. Not performance critical
+6. All clients are GUI applications (ie. not win32 console apps)
+
+Options from this list:
+file mapping - not a great fit
+mailslots - what???
+Named Pipes - given that MSRPC seems to communicate over named pipes,
+why don't we just do this? MSRPC is kind of a superset.
+Windows Sockets - not super secure?
+
+tml on this problem:
+http://lists.freedesktop.org/pipermail/dbus/attachments/20041129/b7a0b7a9/attachment.mht
+
+ "There are (almost by definition..) no Unix domain sockets. What to
+  use instead? There are named pipes, which are a bit like named pipes
+  on Unix. (They don't live in the file system namespace, though.)
+  However, named pipes are designed for inter-machine communication.
+  Connections from other machines would thus have to be checked for
+  and rejected in D-BUS, in code intended for intra-machine purposes."
+
+ "Another alternative would be localhost-bound TCP sockets. This might
+  well be much cleaner."
+
+WHY USE MSRPC?
+--------------
+
+* DCOM uses MSRPC underneath, which we can also use directly.
+
+* MSRPC uses the same IDL as COM (but presumably without the inheritance
+  etc. that COM provides) - but how does the client identify and connect
+  to the server?
+
+Mojica, J. 'COM+ Programming with Visual Basic' (2001)
+http://my.safaribooksonline.com/book/programming/vb/1565928407
+
+  "You may recall from previous chapters that the COM remoting protocol,
+   normally referred to as the DCOM wire protocol, is built on top of MSRPC.
+   In truth, all DCOM calls are true MSRPC calls."
+
+http://www.keyfocus.net/kfsensor/help/AdminGuide/adm_RPC.php
+
+  "Windows DCOM allows applications to share COM functionality over a
+   TCP/IP network. Only a few applications have ever used DCOM and it is
+   due to be phased out by Microsoft. This functionality is turned on by
+   default and uses RPC."
+
+http://www.likewise.com/blog/?p=90
+
+  "Recall that Microsoft really did not embrace IP protocols till NT
+   4.0/Win95 which means around circa 1996. The first thing Microsoft
+   did with its RPC implementation was to retrofit it to run on named
+   pipes. The protocol conventions in DCE/RPC were ncacn_ip_tcp and
+   ncadg_ip_udp, but Microsoft added ncacn_np protocol – connection
+   oriented semantics over SMB named pipes. Security for RPC over
+   named pipes was done with named pipe transport security.
+
+  "Named pipe transport security meant NTLM authentication which was
+   soon roundly trashed in the industry as a weak security mechanism.
+   And that was it – pretty any NTLM secured protocol aka SMB was also
+   trashed and by extension MSRPC was also hammered. In general any
+   traffic on port 139 or port 445 was immediately denounced as badness.
+
+  "Later versions of MSRPC have full gss secured implementations –
+   which means you can do kerberos and ntlm security over ncacn_ip_tcp."
+
+
+Refs
+----
+
+Named pipes:
+  http://www.codeproject.com/KB/threads/Win32IPC.aspx?fid=289900&fr=20
+
+RPC:
+  http://www.codeproject.com/KB/IP/rpcintro1.aspx
+  http://www.codeproject.com/KB/IP/rpcintro2.aspx
+
+SECURITY:
+  "Writing a Secure RPC Client or Server"
+  http://msdn.microsoft.com/en-us/library/aa379441%28v=vs.85%29.aspx
+
+Useful overview on named pipes vs. sockets:
+  http://docs.google.com/viewer?a=v&q=cache:h4eVxtXELHYJ:khambatti.com/mujtaba/ArticlesAndPapers/cse532.pdf+ipc+with+local+tcp+sockets+windows+security&hl=en&gl=uk&pid=bl&srcid=ADGEESjgZreDJBD5oIhvL9EKJtewBVtAIZlrxregHFtavAinqj3ao80eRBUVAKvWriPwHAMLbo-7FlTryc9VS3chLs40Q94IFqwHOOKU_yHG5klF-djl2HmYVS_h2zGi6mjayJJ9rFVX&sig=AHIEtbSmkO0StuOzz_G2z23xAEkU_B98Iw&pli=1
+  
+  "In general, sockets are preferred in a slow LAN, WAN, or dial-up network,
+   whereas named pipes can be a better choice when network speed is not the
+   issue, as it offers more functionality, ease of use, and configuration
+   options."
+
