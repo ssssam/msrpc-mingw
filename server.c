@@ -26,7 +26,7 @@ int main(int   argc,
 	RPC_STATUS status;
 
 	status = RpcServerUseProtseqEp ("ncacn_np",  /* named pipes protocol */
-	                                RPC_C_LISTEN_MAX_CALLS_DEFAULT /* ignore for ncacn_np */,
+	                                RPC_C_LISTEN_MAX_CALLS_DEFAULT,
 	                                "\\pipe\\hello",
 	                                NULL  /* FIXME: access control */);
 
@@ -38,6 +38,11 @@ int main(int   argc,
 
 	printf ("Server: listening\n");
 
+	/* To stop listening, the server can:
+	 *   a) exit the process
+	 *   b) call some functions (see http://msdn.microsoft.com/en-us/library/aa378687%28v=VS.85%29.aspx)
+	 *   c) or, you can action shutdown from the client but our project does not need that.
+	 */
 	status = RpcServerListen (1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, FALSE);
 
 	if (status) exit (status);
