@@ -1,0 +1,57 @@
+#!/bin/sh
+
+#
+# midl-wrapper
+#
+# Wraps calls to the Microsoft IDL compiler (MIDL), with these aims:
+#  - fix compile errors in output code that occur under GNU C compiler (gcc)
+#  - use GNU C preprocessor (cpp)
+#  - swallow stdout chatter
+#
+
+##
+## Configuration
+##
+
+# -Oicf is the preferred option; we cannot use this because the Mingw import
+# library for 'rpcrt4.dll' is missing the function NdrServerCall2. -Oi is
+# deprecated and will eventually be removed.
+MIDL_STUB_MODE="-Oi"
+
+# Generate C code using GNU cpp to avoid requiring MSVC.
+MIDL_C_OPTIONS="-cpp_cmd cpp -cpp_opt \"-E\""
+
+MIDL_OPTIONS="-nologo $MIDL_C_OPTIONS $MIDL_STUB_MODE"
+
+if [ -z $MIDL ]; then
+  MIDL=midl.exe
+fi
+
+##
+## Script
+##
+
+if [ -z $1 ]; then
+  echo "Usage: $0 [idl file]"
+  exit 255
+fi
+
+if [ ! -e $MIDL ]; then
+  echo "Unable to locate $MIDL"
+  exit 1
+fi
+
+idl_file=$1
+
+extension=${idl_file##*.}
+base=`basename $idl_file .$extension`
+
+$MIDL $MIDL_OPTIONS $idl_file | sed -e /^Processing.*/d
+
+# The generated code for some reason uses 'extern' for forward
+# declarations of constants that are defined further down the same
+# file. This (understandably) confuses gcc.
+FIX_FORWARD_DECLS="s/extern const/static const/"
+
+sed -i -e "$FIX_FORWARD_DECLS" ${base}_c.c
+sed -i -e "$FIX_FORWARD_DECLS" ${base}_s.c
