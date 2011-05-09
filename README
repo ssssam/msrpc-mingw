@@ -1,3 +1,74 @@
+TO DO
+ * midl in autotools :(
+ * wrap the RPC calls in a simple library
+ * build moonshot-ui and moonshot on win32:
+   https://gitorious.org/wingtkapp/pages/Home#Notes+and+To+Dos
+   and integrate this stuff!
+ * release this package? blog, copyright etc.
+ * how can you package this so that client and server can access the code?
+   how does this work with dbus? the service is *installed* by the server and
+     the client assumes its existance.
+   for the client, I guess they will need to duplicate the IDL file. which means
+   ideally you do want a simple wrapper library around the MS RPC calls to ease
+   the maintainence burden. You include the generated hello_c or hello_s file in the
+   source code (make this optional I suppose!).
+   Should we make all this depend on glib? The key point is main loop integration,
+   is the RPC code going to have to interact with the main loop?
+ * upload midl.exe and uuidgen.exe somewhere to save having to download the Windows SDK.
+ * rework as installable library with example and tests
+
+ * remember you won't be doing much more on this at UDS ...
+
+Longer term:
+  * Fix mingw import lib for rpcrt4 so we can use the -Oicf MIDL flag; this requires
+    NdrServerCall2 which is missing from the import lib ..
+  * Fix 'excess elements in struct initializer' errors (this could be the mingw headers
+    being out of date).
+  * Cross-compile support
+
+In the context of moonshot-ui:
+1. client calls getIdentity()
+2. server getIdentity function: {
+     GCond *rpc_result_cond;
+     IdCard *result;
+     g_idle_add(rpc_main_loop_callback, [rpc_result_cond, result])
+     wait on rpc_result_cond
+     return result;
+   }
+3. rpc_main_loop_callback() {
+     trigger the same entry point as the Dbus method would have
+   }
+
+9. why on earth is it not an asynchronous API eg.
+     request_identity(identity_callback)
+   identity_callback is called when user has chosen the identity,
+   but meanwhile the application still functions!! In Dbus this is even easier.
+
+   what would you need to do with msrpc to be equivalent?
+
+considerations:
+ - write up design rationale
+ - work out the ultimate aim for integration in moonshot-ui - I'm thinking a little
+   opensource library called msrpc-mingw or msrpc-glib - needs to be as handy as
+   possible to replace the DBus code with, there's of course not enough time to
+   actually build support for MSRPC into Vala (although that would be awesome!)
+   but maybe if Javier writes the dbus code in C stub and then calls that from Vala,
+   then we could use a different stub on Windows that would use the MS RPC code.
+ - make sure returning a string works - write a few tests I suppose!
+ - make it easy to build (I guess the model of MIDL.exe required to build from git but
+   not from tarball should be okay, but check that ... MIDL.exe should probably work under
+   WINE so cross-compiling could be done as well, not that I want to do that :(
+ - security assurances
+   - named pipe should NOT be accessible from the network
+      -> use ncalrpc instead
+   - what's the problem with local machine access control? if the moonshot client library
+     "rogue" applications; the only real way to secure your passwords is to not store
+     is open source then there's not really much point trying to limit access by
+     them ..
+ - test for common fail cases:
+   -> server is already running/another process is providing the RPC service
+
+
 Done
 ----
 
@@ -9,8 +80,11 @@ Done
   Include: C++, MSYS
 
 * Extra packages:
-    msys-wget [1.12-1-msys-1.0.13]
-    msys-vim [7.3-2-msys-1.0.16]
+    mingw32-autotools
+
+   (non-essentials)
+    msys-wget
+    msys-vim
 
 * Install Python 3.2:
     http://python.org/ftp/python/3.2/python-3.2.msi
@@ -22,13 +96,10 @@ Done
 
   Components you need:
     Developer Tools/Windows Development Tools/Win32 Development Tools
-    Developer Tools/Visual C++ Compilers
 
   Things you actually need from this:
     Bin/uuidgen.exe (only to generate an ID for the interface)
     Bin/midl.exe (to generate C code to drive interface)
-    Bin/cl.exe (needed for midl.exe)
-
 
 export PATH=/c/tools/python:/c/Program\ Files/Microsoft\ Visual\ Studio\ 9.0/Common7/IDE:/c/Program\ Files/Microsoft\ Visual\ Studio\ 9.0/VC/bin:$PATH
 
@@ -56,18 +127,7 @@ To generate interface skeleton:
   uuidgen -i -ohello.idl
 
 To compile interface:
-  midl -Oi -out build hello.idl
-
-  If you pass -Oic/-Oicf the code requires NdrClientCall2 and NdrServerCall2
-  which are too new to be in the MSYS import library for rpcrt4.dll. It is
-  not trivial to generate our own import library for the dll, although this
-  would be a better solution because -Oi is deprecated. I think the functions
-  are Win2k+.
-  -> http://msdn.microsoft.com/en-us/library/aa367352%28v=VS.85%29.aspx
-
-The output of midl requires editing:
-  extern const => static const wherever you get a warning
-
+  bin/midl-wrapper hello.idl
 
 
 Running-as-a-service
@@ -99,6 +159,10 @@ ie. MSRPC has multiple protocol backends. some are:
   ncadg_ip_udp = connectionless UDP/IP
   ncacn_np     = named pipes (honours SecurityDescriptor)
   ncalrpc      = local procedure call (honours SecurityDescriptor)
+
+http://msdn.microsoft.com/en-us/library/aa379143%28v=VS.85%29.aspx
+  "Use ncalrp for local RPC calls. these protocols are the most widely used and
+   receive the most scrutiny and testing."
 
 This is a good summary of the protseq options:
   http://technet.microsoft.com/en-us/library/cc738291(v=ws.10).aspx
@@ -246,6 +310,9 @@ RPC:
 SECURITY:
   "Writing a Secure RPC Client or Server"
   http://msdn.microsoft.com/en-us/library/aa379441%28v=vs.85%29.aspx
+
+  From XP SP2 onwards, remote RPC access is disabled by default, but not for ncacn_np (named pipe) protseqs.
+  http://technet.microsoft.com/en-us/library/bb457156.aspx#EGAA
 
 Useful overview on named pipes vs. sockets:
   http://docs.google.com/viewer?a=v&q=cache:h4eVxtXELHYJ:khambatti.com/mujtaba/ArticlesAndPapers/cse532.pdf+ipc+with+local+tcp+sockets+windows+security&hl=en&gl=uk&pid=bl&srcid=ADGEESjgZreDJBD5oIhvL9EKJtewBVtAIZlrxregHFtavAinqj3ao80eRBUVAKvWriPwHAMLbo-7FlTryc9VS3chLs40Q94IFqwHOOKU_yHG5klF-djl2HmYVS_h2zGi6mjayJJ9rFVX&sig=AHIEtbSmkO0StuOzz_G2z23xAEkU_B98Iw&pli=1
