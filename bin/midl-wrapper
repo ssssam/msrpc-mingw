@@ -45,9 +45,10 @@ done
 
 if [ -z $1 ] || [ $1 == "--help" ]; then
   echo "\
-Usage: $0 [-o DIR] IDL_FILE
+Usage: $0 [-o DIR] [-m MIDL] IDL_FILE [ACL_FILE]
 
-    -o DIR: place generated source files into DIR"
+    -o DIR: place generated source files into DIR
+    -m MIDL: location of MIDL.EXE"
   exit 255
 fi
 
