@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=${prefix}
+libdir=@libdir@
+includedir=${prefix}/include
+bindir=@bindir@
+
+midl_wrapper=${bindir}/midl-wrapper
+
+Name: msrpc-mingw
+Description: Wrapper library for the MS Windows RPC API
+Version: @version@
+Libs: -L${libdir} -lrpcrt4
+Cflags: -I${includedir}

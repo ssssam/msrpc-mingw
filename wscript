@@ -1,26 +1,20 @@
 APPNAME = 'msrpc-mingw'
+VERSION = '0.1.0'
 bld = 'build'
 top = '.'
 
+def options(opt):
+	opt.tool_options('gcc gnu_dirs')
+
 def configure(conf):
-	conf.check_tool ('gcc msrpc')
-
-	# Hack because we are not using MSVC to compile
-	conf.env.DEFINES = 'TARGET_IS_NT351_OR_WIN95_OR_LATER'
-
-	conf.env.LIB_RPC = ['rpcrt4']
+	conf.check_tool ('gcc gnu_dirs')
 
 def build(bld):
-	client = bld (features = 'c cprogram msrpc_client',
-	              source = ['client.c'],
-	              msrpc_interface = ['hello.idl', 'hello.acf'],
-	              target = 'client',
-	              includes = ['build'],
-	              use = 'RPC')
+	if bld.is_install:
+		bld (rule="""sed -e 's#@prefix@#${PREFIX}#' -e 's#@libdir@#${LIBDIR}#' -e 's#@bindir@#${BINDIR}#' -e 's#@version@#%s#' < ${SRC} > ${TGT}""" % VERSION,
+		     source='msrpc-mingw-1.0.pc.in',
+		     target='msrpc-mingw-1.0.pc',
+		     install_path='${LIBDIR}/pkgconfig')
 
-	server = bld (features = 'c cprogram msrpc_server',
-	              source = ['server.c'],
-	              msrpc_interface = ['hello.idl', 'hello.acf'],
-	              target = 'server',
-	              includes = ['build'],
-	              use = 'RPC')
+	bld.install_files('${BINDIR}', 'bin/midl-wrapper')
+	bld.install_files('${DATADIR}/aclocal', 'm4macros/msrpc-mingw-1.0.m4')
