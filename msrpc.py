@@ -1,5 +1,15 @@
 ##
 ## Waf support for midl
+##
+## To use:
+##   def configure(conf):
+##     conf.check_tool ('gcc msrpc')
+##
+##   def build(bld):
+##     client = bld (features = 'c cprogram msrpc_client',
+##                   msrpc_interface = ['src/interface.idl', 'src/interface.acl'],
+##                   ...)
+##
 ## FIXME: could submit this upstream?
 ##
 
@@ -46,7 +56,6 @@ def process_msrpc_interface(self, type):
 
 	self.source = self.to_nodes(getattr(self, 'source', []))
 	self.source.append(c_stub_node)
-	print("Source for this task %s: %s; output list %s\n" % (self, str(self.source), str(midl_task.outputs)))
 
 
 @feature('msrpc_server')
