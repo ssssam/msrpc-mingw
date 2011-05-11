@@ -9,5 +9,5 @@ midl_wrapper=${bindir}/midl-wrapper
 Name: msrpc-mingw
 Description: Wrapper library for the MS Windows RPC API
 Version: @version@
-Libs: -L${libdir} -lrpcrt4
+Libs: -L${libdir} -lmsrpc-mingw -lrpcrt4
 Cflags: -I${includedir}
