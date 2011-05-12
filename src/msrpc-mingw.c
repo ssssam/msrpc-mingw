@@ -76,7 +76,7 @@ int msrpc_server_start (RPC_IF_HANDLE  interface_spec,
                         const char    *endpoint_name) {
 	RPC_STATUS status;
 
-	status = RpcServerUseProtseqEp ("ncalrpc",  /* local RPC */
+	status = RpcServerUseProtseqEp ("ncalrpc",  /* local RPC only */
 	                                RPC_C_LISTEN_MAX_CALLS_DEFAULT,
 	                                "hello-world",
 	                                NULL  /* FIXME: access control */);
@@ -122,7 +122,7 @@ int msrpc_client_connect (handle_t   *interface_handle,
 	super_exception_handler = SetUnhandledExceptionFilter (exception_handler);
 
 	status = RpcStringBindingCompose (NULL,
-	                                  "ncalrpc" /* named pipes protocol */,
+	                                  "ncalrpc" /* local RPC only */,
 	                                  NULL,
 	                                  (LPSTR)endpoint_name,
 	                                  NULL,
