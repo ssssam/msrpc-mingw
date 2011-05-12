@@ -27,7 +27,7 @@ MIDL_OPTIONS="-nologo $MIDL_C_OPTIONS $MIDL_STUB_MODE"
 
 
 ##
-## Script
+## Preparation
 ##
 
 while [ $# -gt 0 ]; do
@@ -75,14 +75,29 @@ if [ -e $acf_file ]; then
   MIDL_OPTIONS="$MIDL_OPTIONS -acf $acf_file"
 fi
 
-$MIDL $MIDL_OPTIONS $idl_file | sed -e /^Processing.*/d
-
-
 extension=${idl_file##*.}
 base=`basename $idl_file .$extension`
 
 if [ -n $output_path ] && [ "$output_path" != "" ]; then
   base="$output_path/$base"
+fi
+
+
+##
+## Execution
+##
+
+$MIDL $MIDL_OPTIONS $idl_file | sed -e /^Processing.*/d
+
+
+##
+## Fixing up output
+##
+
+RESULT=${PIPESTATUS[0]}
+if [ $RESULT -ne 0 ]; then
+  rm -f ${base}_c.c ${base}_s.s ${base}.h
+  exit $RESULT
 fi
 
 # The generated code for some reason uses 'extern' for forward
