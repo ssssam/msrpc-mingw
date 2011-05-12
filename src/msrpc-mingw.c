@@ -78,7 +78,7 @@ int msrpc_server_start (RPC_IF_HANDLE  interface_spec,
 
 	status = RpcServerUseProtseqEp ("ncalrpc",  /* local RPC only */
 	                                RPC_C_LISTEN_MAX_CALLS_DEFAULT,
-	                                "hello-world",
+	                                endpoint_name,
 	                                NULL  /* FIXME: access control */);
 
 	if (status) {
