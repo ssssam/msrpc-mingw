@@ -19,6 +19,11 @@ void msrpc_client_unbind         (handle_t *interface_handle);
 
 typedef RPC_ASYNC_STATE MsrpcAsyncCall;
 
+/* Client-side API */
 void  msrpc_async_call_init     (MsrpcAsyncCall *call);
-void *msrpc_async_call_complete (MsrpcAsyncCall *call);               /* for client */
-void  msrpc_async_call_return   (MsrpcAsyncCall *call, void *result); /* for server */
+void *msrpc_async_call_complete (MsrpcAsyncCall *call);
+int   msrpc_async_call_cancel   (MsrpcAsyncCall *call);
+
+/* Server-side API */
+void  msrpc_async_call_return       (MsrpcAsyncCall *call, void *result);
+int   msrpc_async_call_is_cancelled (MsrpcAsyncCall *call);

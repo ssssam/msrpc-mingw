@@ -18,6 +18,7 @@ int main () {
 	RPC_STATUS      status;
 	DWORD           wait_result;
 	unsigned char  *message;
+	int             cancelled;
 
 	msrpc_client_bind (&async_rpc_interface_handle, DEFAULT_ENDPOINT);
 
@@ -39,6 +40,13 @@ int main () {
 
 	printf ("%x -> %s (%i)\n", (int)message, message, strlen(message));
 	MIDL_user_free (message);
+
+	msrpc_async_call_init (&async_call);
+	black_hole (&async_call);
+
+	printf ("client: Called black_hole ()\n");
+	cancelled = msrpc_async_call_cancel (&async_call);
+	printf ("client: Cancel completed: %i\n", cancelled);
 
 	msrpc_client_unbind (&async_rpc_interface_handle);
 }

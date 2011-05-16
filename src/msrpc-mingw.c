@@ -203,6 +203,30 @@ void *msrpc_async_call_complete (MsrpcAsyncCall *call) {
 	return return_value;
 }
 
+int msrpc_async_call_cancel (MsrpcAsyncCall *call) {
+	RPC_STATUS status;
+
+	/* Issue an abortive cancel - don't wait for server to respond */
+	status = RpcAsyncCancelCall (call, TRUE);
+
+	if (status != RPC_S_OK) {
+		msrpc_log_error_from_status (status);
+		return FALSE;
+	}
+
+	status = RpcAsyncCompleteCall (call, NULL);
+
+	if (status == RPC_S_CALL_CANCELLED)
+		return TRUE;
+
+	if (status != RPC_S_OK) {
+		msrpc_log_error_from_status (status);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 /* Return value from server side */
 void msrpc_async_call_return (MsrpcAsyncCall *call,
                               void           *return_value) {
@@ -210,8 +234,44 @@ void msrpc_async_call_return (MsrpcAsyncCall *call,
 
 	status = RpcAsyncCompleteCall (call, return_value);
 
-	if (status) {
+	if (status != RPC_S_OK) {
 		msrpc_log_error_from_status (status);
 		return;
 	}
+}
+
+void msrpc_async_call_abort (MsrpcAsyncCall *call,
+                             int             reason) {
+	RPC_STATUS status;
+
+	status = RpcAsyncAbortCall (call, reason);
+
+	printf ("async abort call %i\n", status);
+	if (status != RPC_S_OK) {
+		msrpc_log_error_from_status (status);
+		return;
+	}
+	printf ("done\n");
+}
+
+int msrpc_async_call_is_cancelled (MsrpcAsyncCall *call) {
+	RPC_STATUS status;
+
+	status = RpcServerTestCancel (call);
+
+	if (status == RPC_S_OK)
+		return TRUE;
+
+	if (status == RPC_S_CALL_IN_PROGRESS)
+		return FALSE;
+
+	if (status == RPC_S_INVALID_ASYNC_HANDLE) {
+		/* Assume that the user passed a correct handle of a call that
+		 * has already been cancelled ...
+		 */
+		 return TRUE;
+	}
+
+	msrpc_log_error_from_status (status);
+	return FALSE;
 }

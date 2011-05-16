@@ -36,6 +36,18 @@ void sync_query (unsigned char    *name,
 	printf ("Got sync call from %s; return %x -> %x (%i)\n", name, (int)our_message, (int)*message, strlen(*message));
 }
 
+void black_hole (MsrpcAsyncCall *async_call) {
+	printf ("server: Black hole .. asleep\n");
+	Sleep (5 * 1000);
+
+	if (!msrpc_async_call_is_cancelled (RpcAsyncGetCallHandle(async_call)))
+		printf ("server: WARNING: black hole did not receive a cancel!\n");
+
+	msrpc_async_call_return (async_call, NULL);
+
+	printf ("server: Black hole - returned\n");
+}
+
 int main () {
 	msrpc_server_start (AsyncRPC_v1_0_s_ifspec, DEFAULT_ENDPOINT);
 
