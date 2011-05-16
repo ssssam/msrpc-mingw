@@ -13,25 +13,25 @@
  * --------------
  *
  * By default, errors are printed to the console and then process exits. You
- * can set a custom handler using msrpc_set_log_function(). If using GLib,
+ * can set a custom handler using rpc_set_log_function(). If using GLib,
  * note that you may do the following:
  *
- *   msrpc_set_log_function (g_logv);
+ *   rpc_set_log_function (g_logv);
  *
  */
 
-#define MSRPC_LOG_LEVEL_ERROR   (1<<2)
+#define RPC_LOG_LEVEL_ERROR   (1<<2)
 
-typedef void (*MsrpcLogFunction) (const char *domain,
+typedef void (*RpcLogFunction) (const char *domain,
                                   int         errorlevel,
                                   const char *format,
                                   va_list     args);
 
-static MsrpcLogFunction log_function = msrpc_default_log_function;
+static RpcLogFunction log_function = rpc_default_log_function;
 
 static LPTOP_LEVEL_EXCEPTION_FILTER super_exception_handler;
 
-void msrpc_default_log_function (const char *domain,
+void rpc_default_log_function (const char *domain,
                                  int         errorlevel,
                                  const char *format,
                                  va_list     args) {
@@ -39,17 +39,17 @@ void msrpc_default_log_function (const char *domain,
 	exit (1);
 }
 
-void msrpc_log_error (const char *format, ...) {
+void rpc_log_error (const char *format, ...) {
 	va_list args;
 	va_start (args, format);
-	log_function ("msrpc", MSRPC_LOG_LEVEL_ERROR, format, args);
+	log_function ("msrpc", RPC_LOG_LEVEL_ERROR, format, args);
 	va_end (args);
 }
 
-void msrpc_log_error_from_status (DWORD status) {
+void rpc_log_error_from_status (DWORD status) {
 	char buffer[256];
 	FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, NULL, status, 0, (LPSTR)&buffer, 255, NULL);
-	msrpc_log_error (buffer);
+	rpc_log_error (buffer);
 }
 
 static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers) {
@@ -58,7 +58,7 @@ static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers) {
 	/* Filter for RPC errors - not perfect, but avoids too many false
 	 * positives. See winerror.h for the actual codes. */
 	if (exception->ExceptionCode & 0x1700)
-		msrpc_log_error_from_status (exception->ExceptionCode);
+		rpc_log_error_from_status (exception->ExceptionCode);
 
 	return super_exception_handler (exception_pointers);
 }
@@ -67,12 +67,12 @@ static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers) {
 /* Init and shutdown
  * -----------------
  *
- * Any errors will result in the msrpc_log function being called.
+ * Any errors will result in the rpc_log function being called.
  */
 
 static RPC_IF_HANDLE server_interface = NULL;
 
-int msrpc_server_start (RPC_IF_HANDLE  interface_spec,
+int rpc_server_start (RPC_IF_HANDLE  interface_spec,
                         const char    *endpoint_name) {
 	RPC_STATUS status;
 
@@ -82,28 +82,28 @@ int msrpc_server_start (RPC_IF_HANDLE  interface_spec,
 	                                NULL  /* FIXME: access control */);
 
 	if (status) {
-		msrpc_log_error_from_status (status);
+		rpc_log_error_from_status (status);
 		return status;
 	}
 
 	status = RpcServerRegisterIf (interface_spec, NULL, NULL);
 
 	if (status) {
-		msrpc_log_error_from_status (status);
+		rpc_log_error_from_status (status);
 		return status;
 	}
 
 	status = RpcServerListen (1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE);
 
 	if (status) {
-		msrpc_log_error_from_status (status);
+		rpc_log_error_from_status (status);
 		return status;
 	}
 
 	return 0;
 }
 
-void msrpc_server_stop () {
+void rpc_server_stop () {
 	if (server_interface == NULL)
 		return;
 
@@ -114,7 +114,7 @@ void msrpc_server_stop () {
 }
 
 
-int msrpc_client_bind (handle_t   *interface_handle,
+int rpc_client_bind (handle_t   *interface_handle,
                        const char *endpoint_name) {
 	RPC_STATUS status;
 	unsigned char *string_binding = NULL;
@@ -129,7 +129,7 @@ int msrpc_client_bind (handle_t   *interface_handle,
 	                                  &string_binding);
 
 	if (status) {
-		msrpc_log_error_from_status (status);
+		rpc_log_error_from_status (status);
 		return status;
 	}
 
@@ -137,7 +137,7 @@ int msrpc_client_bind (handle_t   *interface_handle,
 	                                      interface_handle);
 
 	if (status) {
-		msrpc_log_error_from_status (status);
+		rpc_log_error_from_status (status);
 		return status;
 	}
 
@@ -146,7 +146,7 @@ int msrpc_client_bind (handle_t   *interface_handle,
 	return 0;
 }
 
-void msrpc_client_unbind (handle_t *interface_handle) {
+void rpc_client_unbind (handle_t *interface_handle) {
 	RpcBindingFree (interface_handle);
 }
 
@@ -154,16 +154,16 @@ void msrpc_client_unbind (handle_t *interface_handle) {
 /* Asynchronous calls
  * ------------------
  *
- * Any errors will result in the msrpc_log function being called.
+ * Any errors will result in the rpc_log function being called.
  */
 
-void msrpc_async_call_init (MsrpcAsyncCall *call) {
+void rpc_async_call_init (RpcAsyncCall *call) {
 	RPC_STATUS status;
 
 	status = RpcAsyncInitializeHandle (call, sizeof(RPC_ASYNC_STATE));
 
 	if (status) {
-		msrpc_log_error_from_status (status);
+		rpc_log_error_from_status (status);
 		return;
 	}
 
@@ -173,13 +173,13 @@ void msrpc_async_call_init (MsrpcAsyncCall *call) {
 	call->u.hEvent = CreateEvent (NULL, FALSE, FALSE, NULL);
 
 	if (call->u.hEvent == 0) {
-		msrpc_log_error_from_status (status);
+		rpc_log_error_from_status (status);
 		return;
 	}
 }
 
 /* Wait for completion and return result, client side */
-void *msrpc_async_call_complete (MsrpcAsyncCall *call) {
+void *rpc_async_call_complete (RpcAsyncCall *call) {
 	DWORD      result;
 	RPC_STATUS status;
 	LPVOID     return_value = NULL;
@@ -187,14 +187,14 @@ void *msrpc_async_call_complete (MsrpcAsyncCall *call) {
 	result = WaitForSingleObject (call->u.hEvent, INFINITE);
 
 	if (result != WAIT_OBJECT_0) {
-		msrpc_log_error_from_status (result);
+		rpc_log_error_from_status (result);
 		return NULL;
 	}
 
 	status = RpcAsyncCompleteCall (call, &return_value);
 
 	if (status != RPC_S_OK) {
-		msrpc_log_error_from_status (status);
+		rpc_log_error_from_status (status);
 		return NULL;
 	}
 
@@ -203,14 +203,14 @@ void *msrpc_async_call_complete (MsrpcAsyncCall *call) {
 	return return_value;
 }
 
-int msrpc_async_call_cancel (MsrpcAsyncCall *call) {
+int rpc_async_call_cancel (RpcAsyncCall *call) {
 	RPC_STATUS status;
 
 	/* Issue an abortive cancel - don't wait for server to respond */
 	status = RpcAsyncCancelCall (call, TRUE);
 
 	if (status != RPC_S_OK) {
-		msrpc_log_error_from_status (status);
+		rpc_log_error_from_status (status);
 		return FALSE;
 	}
 
@@ -220,7 +220,7 @@ int msrpc_async_call_cancel (MsrpcAsyncCall *call) {
 		return TRUE;
 
 	if (status != RPC_S_OK) {
-		msrpc_log_error_from_status (status);
+		rpc_log_error_from_status (status);
 		return FALSE;
 	}
 
@@ -228,19 +228,19 @@ int msrpc_async_call_cancel (MsrpcAsyncCall *call) {
 }
 
 /* Return value from server side */
-void msrpc_async_call_return (MsrpcAsyncCall *call,
+void rpc_async_call_return (RpcAsyncCall *call,
                               void           *return_value) {
 	RPC_STATUS status;
 
 	status = RpcAsyncCompleteCall (call, return_value);
 
 	if (status != RPC_S_OK) {
-		msrpc_log_error_from_status (status);
+		rpc_log_error_from_status (status);
 		return;
 	}
 }
 
-void msrpc_async_call_abort (MsrpcAsyncCall *call,
+void rpc_async_call_abort (RpcAsyncCall *call,
                              int             reason) {
 	RPC_STATUS status;
 
@@ -248,16 +248,16 @@ void msrpc_async_call_abort (MsrpcAsyncCall *call,
 
 	printf ("async abort call %i\n", status);
 	if (status != RPC_S_OK) {
-		msrpc_log_error_from_status (status);
+		rpc_log_error_from_status (status);
 		return;
 	}
 	printf ("done\n");
 }
 
-int msrpc_async_call_is_cancelled (MsrpcAsyncCall *call) {
+int rpc_async_call_is_cancelled (RpcAsyncCall *call) {
 	RPC_STATUS status;
 
-	status = RpcServerTestCancel (call);
+	status = RpcServerTestCancel (RpcAsyncGetCallHandle (call));
 
 	if (status == RPC_S_OK)
 		return TRUE;
@@ -272,6 +272,6 @@ int msrpc_async_call_is_cancelled (MsrpcAsyncCall *call) {
 		 return TRUE;
 	}
 
-	msrpc_log_error_from_status (status);
+	rpc_log_error_from_status (status);
 	return FALSE;
 }

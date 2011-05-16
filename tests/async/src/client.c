@@ -14,13 +14,13 @@ void __RPC_USER MIDL_user_free (void *user) {
 }
 
 int main () {
-	MsrpcAsyncCall  async_call;
-	RPC_STATUS      status;
-	DWORD           wait_result;
-	unsigned char  *message;
-	int             cancelled;
+	RpcAsyncCall   async_call;
+	RPC_STATUS     status;
+	DWORD          wait_result;
+	unsigned char *message;
+	int            cancelled;
 
-	msrpc_client_bind (&async_rpc_interface_handle, DEFAULT_ENDPOINT);
+	rpc_client_bind (&async_rpc_interface_handle, DEFAULT_ENDPOINT);
 
 	printf ("Client has binding to %s\n", DEFAULT_ENDPOINT);
 
@@ -32,21 +32,21 @@ int main () {
 
 	message = NULL;
 
-	msrpc_async_call_init (&async_call);
+	rpc_async_call_init (&async_call);
 
 	async_query (&async_call, "Frank", &message);
 
-	msrpc_async_call_complete (&async_call);
+	rpc_async_call_complete (&async_call);
 
 	printf ("%x -> %s (%i)\n", (int)message, message, strlen(message));
 	MIDL_user_free (message);
 
-	msrpc_async_call_init (&async_call);
+	rpc_async_call_init (&async_call);
 	black_hole (&async_call);
 
 	printf ("client: Called black_hole ()\n");
-	cancelled = msrpc_async_call_cancel (&async_call);
+	cancelled = rpc_async_call_cancel (&async_call);
 	printf ("client: Cancel completed: %i\n", cancelled);
 
-	msrpc_client_unbind (&async_rpc_interface_handle);
+	rpc_client_unbind (&async_rpc_interface_handle);
 }

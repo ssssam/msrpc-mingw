@@ -23,9 +23,9 @@ void say_hello (const unsigned char *name) {
 
 int main(int   argc,
          char *argv[]) {
-	msrpc_server_start (hello_v1_0_s_ifspec, "hello-world");
+	rpc_server_start (hello_v1_0_s_ifspec, "hello-world");
 
 	Sleep (60 * 1000);
 
-	msrpc_server_stop ();
+	rpc_server_stop ();
 }
