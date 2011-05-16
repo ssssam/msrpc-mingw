@@ -20,9 +20,9 @@ void __RPC_USER MIDL_user_free (void *user) {
 
 int main(int   argc,
          char *argv[]) {
-	msrpc_client_connect (&hello_IfHandle, "hello-world");
+	msrpc_client_bind (&hello_IfHandle, "hello-world");
 
 	say_hello ("Client");
 
-	msrpc_client_disconnect (&hello_IfHandle);
+	msrpc_client_unbind (&hello_IfHandle);
 }

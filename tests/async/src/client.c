@@ -19,7 +19,7 @@ int main () {
 	DWORD           wait_result;
 	unsigned char  *message;
 
-	msrpc_client_connect (&async_rpc_interface_handle, DEFAULT_ENDPOINT);
+	msrpc_client_bind (&async_rpc_interface_handle, DEFAULT_ENDPOINT);
 
 	printf ("Client has binding to %s\n", DEFAULT_ENDPOINT);
 
@@ -59,5 +59,5 @@ int main () {
 	printf ("%x -> %s (%i)\n", (int)message, message, strlen(message));
 	MIDL_user_free (message);
 
-	msrpc_client_disconnect (&async_rpc_interface_handle);
+	msrpc_client_unbind (&async_rpc_interface_handle);
 }

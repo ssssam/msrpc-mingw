@@ -13,6 +13,6 @@ void        msrpc_log_error_from_status (DWORD status);
 int         msrpc_server_start          (RPC_IF_HANDLE interface_spec, const char *endpoint_name);
 void        msrpc_server_stop           ();
 
-int         msrpc_client_connect        (handle_t *interface_handle, const char *endpoint_name);
-void        msrpc_client_disconnect     (handle_t *interface_handle);
+int         msrpc_client_bind           (handle_t *interface_handle, const char *endpoint_name);
+void        msrpc_client_unbind         (handle_t *interface_handle);
 

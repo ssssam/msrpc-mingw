@@ -114,8 +114,8 @@ void msrpc_server_stop () {
 }
 
 
-int msrpc_client_connect (handle_t   *interface_handle,
-                          const char *endpoint_name) {
+int msrpc_client_bind (handle_t   *interface_handle,
+                       const char *endpoint_name) {
 	RPC_STATUS status;
 	unsigned char *string_binding = NULL;
 
@@ -146,6 +146,6 @@ int msrpc_client_connect (handle_t   *interface_handle,
 	return 0;
 }
 
-void msrpc_client_disconnect (handle_t *interface_handle) {
+void msrpc_client_unbind (handle_t *interface_handle) {
 	RpcBindingFree (interface_handle);
 }
