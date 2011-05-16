@@ -42,7 +42,7 @@ def process_msrpc_interface(self, type):
 	header_exists = False
 	for group in self.bld.groups:
 		for task_gen in group:
-			for task in task_gen.tasks:
+			for task in getattr(task_gen, 'tasks', []):
 				if c_header in task.outputs:
 					header_exists = True
 					break
