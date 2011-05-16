@@ -13,12 +13,12 @@
 ## Configuration
 ##
 
-# -Oicf is the preferred option; we cannot use this because the Mingw import
-# library for 'rpcrt4.dll' is missing the function NdrServerCall2. -Oi is
-# deprecated and will eventually be removed.
-#
-# See also: http://msdn.microsoft.com/en-us/library/aa367352(v=VS.85).aspx
-MIDL_STUB_MODE="-Oi"
+# Note: this mode requires functions which are missing from old versions
+# of mingw w32api package. If you're getting link errors for missing
+# NdrServerCall2() etc., one solution is to use -Oi. A better one is to
+# use w32api 3.17.3 or better (FIXME: not yet released, I have a patch
+# pending which hopefully will go in this release).
+MIDL_STUB_MODE="-Oicf"
 
 # Generate C code using GNU cpp to avoid requiring MSVC.
 MIDL_C_OPTIONS="-cpp_cmd cpp -cpp_opt \"-E\""
