@@ -1,0 +1,22 @@
+def build (bld):
+	# msrpc-mingw/tests/async/src
+	src_dir = bld.path.find_dir('src')
+
+	# msrpc-mingw/src
+	local_msrpc_include_path = bld.root.find_dir('src').relpath()
+
+	bld (features = 'c cprogram msrpc_client',
+	     source = 'src/client.c',
+	     msrpc_interface = ['src/async.idl', 'src/async.acf'],
+	     target = 'client',
+	     use = 'msrpc-mingw',
+	     uselib = 'RPC',
+	     includes = [local_msrpc_include_path, src_dir.get_bld()])
+
+	bld (features = 'c cprogram msrpc_server',
+	     source = 'src/server.c',
+	     msrpc_interface = ['src/async.idl', 'src/async.acf'],
+	     target = 'server',
+	     use = 'msrpc-mingw',
+	     uselib = 'RPC',
+	     includes = [local_msrpc_include_path, src_dir.get_bld()])

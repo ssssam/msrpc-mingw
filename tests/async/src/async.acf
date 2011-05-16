@@ -1,0 +1,7 @@
+[
+  implicit_handle (handle_t async_rpc_interface_handle)
+]
+interface AsyncRPC
+{
+    [async] async_query ();
+}

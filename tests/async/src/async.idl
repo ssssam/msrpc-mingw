@@ -1,0 +1,14 @@
+[ 
+    uuid (7f6c4340-eb67-11d1-b9d7-00c04fad9a3b),
+    version(1.0),
+]
+interface AsyncRPC
+{
+    const char *DEFAULT_ENDPOINT = "test-async";
+
+    void sync_query ([in, string]  unsigned char  *name,
+                     [out, string] unsigned char **message);
+
+    void async_query ([in, string]  unsigned char  *name,
+                      [out, string] unsigned char **message);
+}

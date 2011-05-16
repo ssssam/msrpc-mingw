@@ -10,4 +10,4 @@ Name: msrpc-mingw
 Description: Wrapper library for the MS Windows RPC API
 Version: @version@
 Libs: -L${libdir} -lmsrpc-mingw -lrpcrt4
-Cflags: -I${includedir}
+Cflags: -DTARGET_IS_NT50_OR_LATER -I${includedir}
