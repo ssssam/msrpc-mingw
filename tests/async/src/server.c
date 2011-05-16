@@ -13,10 +13,9 @@ void __RPC_USER MIDL_user_free (void *user) {
 	free (user);
 }
 
-void async_query (PRPC_ASYNC_STATE  async_query_handle,
-                  unsigned char    *name,
-                  unsigned char   **message) {
-	RPC_STATUS status;
+void async_query (MsrpcAsyncCall  *async_call,
+                  unsigned char   *name,
+                  unsigned char  **message) {
 	const char *our_message = "Where have you been?";
 
 	*message = MIDL_user_allocate (strlen (our_message) + 1);
@@ -24,11 +23,7 @@ void async_query (PRPC_ASYNC_STATE  async_query_handle,
 
 	printf ("Got async call from %s\n", name);
 
-	status = RpcAsyncCompleteCall (async_query_handle, NULL);
-	if (status) {
-		msrpc_log_error_from_status (status);
-		exit(1);
-	}
+	msrpc_async_call_return (async_call, NULL);
 }
 
 void sync_query (unsigned char    *name,

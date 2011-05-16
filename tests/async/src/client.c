@@ -14,7 +14,7 @@ void __RPC_USER MIDL_user_free (void *user) {
 }
 
 int main () {
-	RPC_ASYNC_STATE async_state;
+	MsrpcAsyncCall  async_call;
 	RPC_STATUS      status;
 	DWORD           wait_result;
 	unsigned char  *message;
@@ -28,33 +28,14 @@ int main () {
 
 	printf ("%x -> %s (%i)\n", (int)message, message, strlen(message));
 	MIDL_user_free (message);
+
 	message = NULL;
 
-	status = RpcAsyncInitializeHandle (&async_state, sizeof(RPC_ASYNC_STATE));
-	if (status) exit (status);
+	msrpc_async_call_init (&async_call);
 
-	async_state.UserInfo = NULL;
-	async_state.NotificationType = RpcNotificationTypeEvent;
+	async_query (&async_call, "Frank", &message);
 
-	async_state.u.hEvent = CreateEvent (NULL, FALSE, FALSE, NULL);
-	if (async_state.u.hEvent == 0) exit (1);
-
-	async_query (&async_state, "Frank", &message);
-
-	wait_result = WaitForSingleObject (async_state.u.hEvent, INFINITE);
-
-	if (wait_result != WAIT_OBJECT_0) {
-		msrpc_log_error_from_status (wait_result);
-		exit (2);
-	}
-
-	status = RpcAsyncCompleteCall (&async_state, NULL);
-	if (status != RPC_S_OK) {
-		msrpc_log_error_from_status (status);
-		exit (3);
-	}
-
-	CloseHandle (async_state.u.hEvent);
+	msrpc_async_call_complete (&async_call);
 
 	printf ("%x -> %s (%i)\n", (int)message, message, strlen(message));
 	MIDL_user_free (message);

@@ -149,3 +149,69 @@ int msrpc_client_bind (handle_t   *interface_handle,
 void msrpc_client_unbind (handle_t *interface_handle) {
 	RpcBindingFree (interface_handle);
 }
+
+
+/* Asynchronous calls
+ * ------------------
+ *
+ * Any errors will result in the msrpc_log function being called.
+ */
+
+void msrpc_async_call_init (MsrpcAsyncCall *call) {
+	RPC_STATUS status;
+
+	status = RpcAsyncInitializeHandle (call, sizeof(RPC_ASYNC_STATE));
+
+	if (status) {
+		msrpc_log_error_from_status (status);
+		return;
+	}
+
+	call->UserInfo = NULL;
+	call->NotificationType = RpcNotificationTypeEvent;
+
+	call->u.hEvent = CreateEvent (NULL, FALSE, FALSE, NULL);
+
+	if (call->u.hEvent == 0) {
+		msrpc_log_error_from_status (status);
+		return;
+	}
+}
+
+/* Wait for completion and return result, client side */
+void *msrpc_async_call_complete (MsrpcAsyncCall *call) {
+	DWORD      result;
+	RPC_STATUS status;
+	LPVOID     return_value = NULL;
+
+	result = WaitForSingleObject (call->u.hEvent, INFINITE);
+
+	if (result != WAIT_OBJECT_0) {
+		msrpc_log_error_from_status (result);
+		return NULL;
+	}
+
+	status = RpcAsyncCompleteCall (call, &return_value);
+
+	if (status != RPC_S_OK) {
+		msrpc_log_error_from_status (status);
+		return NULL;
+	}
+
+	CloseHandle (call->u.hEvent);
+
+	return return_value;
+}
+
+/* Return value from server side */
+void msrpc_async_call_return (MsrpcAsyncCall *call,
+                              void           *return_value) {
+	RPC_STATUS status;
+
+	status = RpcAsyncCompleteCall (call, return_value);
+
+	if (status) {
+		msrpc_log_error_from_status (status);
+		return;
+	}
+}
