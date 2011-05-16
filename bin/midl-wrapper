@@ -53,11 +53,11 @@ Usage: $0 [-o DIR] [-m MIDL] IDL_FILE [ACL_FILE]
 fi
 
 
-if [ -z $MIDL ]; then
+if [ "$MIDL" = "" ]; then
   MIDL=midl.exe
 fi
 
-if [ ! -x $MIDL ]; then
+if [ ! -x "$MIDL" ]; then
   echo "Unable to locate $MIDL"
   exit 2
 fi
@@ -87,7 +87,7 @@ fi
 ## Execution
 ##
 
-$MIDL $MIDL_OPTIONS $idl_file | sed -e /^Processing.*/d
+"$MIDL" $MIDL_OPTIONS $idl_file | sed -e /^Processing.*/d
 
 
 ##
