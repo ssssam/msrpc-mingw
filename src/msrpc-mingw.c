@@ -39,17 +39,17 @@ void msrpc_default_log_function (const char *domain,
 	exit (1);
 }
 
-static void log_error (const char *format, ...) {
+void msrpc_log_error (const char *format, ...) {
 	va_list args;
 	va_start (args, format);
 	log_function ("msrpc", MSRPC_LOG_LEVEL_ERROR, format, args);
 	va_end (args);
 }
 
-static void log_error_from_status (DWORD status) {
+void msrpc_log_error_from_status (DWORD status) {
 	char buffer[256];
 	FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, NULL, status, 0, (LPSTR)&buffer, 255, NULL);
-	log_error (buffer);
+	msrpc_log_error (buffer);
 }
 
 static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers) {
@@ -58,7 +58,7 @@ static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers) {
 	/* Filter for RPC errors - not perfect, but avoids too many false
 	 * positives. See winerror.h for the actual codes. */
 	if (exception->ExceptionCode & 0x1700)
-		log_error_from_status (exception->ExceptionCode);
+		msrpc_log_error_from_status (exception->ExceptionCode);
 
 	return super_exception_handler (exception_pointers);
 }
@@ -67,7 +67,7 @@ static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers) {
 /* Init and shutdown
  * -----------------
  *
- * Any errors will result in the log function being called.
+ * Any errors will result in the msrpc_log function being called.
  */
 
 static RPC_IF_HANDLE server_interface = NULL;
@@ -78,25 +78,25 @@ int msrpc_server_start (RPC_IF_HANDLE  interface_spec,
 
 	status = RpcServerUseProtseqEp ("ncalrpc",  /* local RPC only */
 	                                RPC_C_LISTEN_MAX_CALLS_DEFAULT,
-	                                endpoint_name,
+	                                (LPSTR)endpoint_name,
 	                                NULL  /* FIXME: access control */);
 
 	if (status) {
-		log_error_from_status (status);
+		msrpc_log_error_from_status (status);
 		return status;
 	}
 
 	status = RpcServerRegisterIf (interface_spec, NULL, NULL);
 
 	if (status) {
-		log_error_from_status (status);
+		msrpc_log_error_from_status (status);
 		return status;
 	}
 
 	status = RpcServerListen (1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE);
 
 	if (status) {
-		log_error_from_status (status);
+		msrpc_log_error_from_status (status);
 		return status;
 	}
 
@@ -129,7 +129,7 @@ int msrpc_client_connect (handle_t   *interface_handle,
 	                                  &string_binding);
 
 	if (status) {
-		log_error_from_status (status);
+		msrpc_log_error_from_status (status);
 		return status;
 	}
 
@@ -137,7 +137,7 @@ int msrpc_client_connect (handle_t   *interface_handle,
 	                                      interface_handle);
 
 	if (status) {
-		log_error_from_status (status);
+		msrpc_log_error_from_status (status);
 		return status;
 	}
 
