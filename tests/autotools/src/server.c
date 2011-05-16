@@ -9,14 +9,6 @@
 
 #include <stdio.h>
 
-void *__RPC_USER MIDL_user_allocate (size_t size) {
-	return malloc (size);
-}
-
-void __RPC_USER MIDL_user_free (void *user) {
-	free (user);
-}
-
 void say_hello (const unsigned char *name) {
 	printf ("Hello %s. Yours, the Server\n", name);
 }

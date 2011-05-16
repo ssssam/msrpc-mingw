@@ -9,6 +9,20 @@
 #include <stdio.h>
 
 
+/* Memory management stubs
+ * -----------------------
+ */
+
+void *__RPC_USER MIDL_user_allocate (size_t size) {
+	return malloc (size);
+}
+
+void __RPC_USER MIDL_user_free (void *user) {
+	free (user);
+}
+
+
+
 /* Error handling
  * --------------
  *

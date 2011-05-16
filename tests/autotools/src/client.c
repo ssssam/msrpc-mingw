@@ -10,14 +10,6 @@
 #include <signal.h>
 #include <stdio.h>
 
-void *__RPC_USER MIDL_user_allocate (size_t size) {
-	return malloc (size);
-}
-
-void __RPC_USER MIDL_user_free (void *user) {
-	free (user);
-}
-
 int main(int   argc,
          char *argv[]) {
 	rpc_client_bind (&hello_IfHandle, "hello-world");
