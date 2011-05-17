@@ -21,7 +21,7 @@
 MIDL_STUB_MODE="-Oicf"
 
 # Generate C code using GNU cpp to avoid requiring MSVC.
-MIDL_C_OPTIONS="-cpp_cmd cpp -cpp_opt \"-E\""
+MIDL_C_OPTIONS="-cpp_cmd cpp -cpp_opt \"-E\" -char unsigned"
 
 MIDL_OPTIONS="-nologo $MIDL_C_OPTIONS $MIDL_STUB_MODE"
 
