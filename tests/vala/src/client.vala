@@ -22,7 +22,7 @@ public int main (string[] args) {
 	Rpc.AsyncCall call = Rpc.AsyncCall ();
 	string message = null;
 
-	ValaInterface.async_request (call, ref message);
+	ValaInterface.get_message (call, ref message);
 
 	call.complete ();
 

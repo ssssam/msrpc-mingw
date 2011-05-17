@@ -5,5 +5,5 @@
 interface vala
 {
   int vala_interface_ping ([in, string] const char *message);
-  void vala_interface_async_request ([out, string] char **message);
+  void vala_interface_get_message ([out, string] char **message);
 }

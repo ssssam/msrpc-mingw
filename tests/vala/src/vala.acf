@@ -4,5 +4,5 @@
 ]
 interface vala
 {
-	[async] vala_interface_async_request();
+	[async] vala_interface_get_message();
 }

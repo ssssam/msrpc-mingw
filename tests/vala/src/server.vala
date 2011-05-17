@@ -1,26 +1,41 @@
 using Rpc;
 using ValaInterface;
 
-public int counter = 0;
+static const string global_message = "Bore da";
 
-public int vala_interface_ping (string message)
-{
-	stdout.printf ("%s\n", message);
-	return counter++;
-}
+private class MessageRequest: Object {
+	Rpc.AsyncCall call;
+	char **message;
 
-/* @message must be a 'ref' and not an 'out' parameter, because Vala
- * only assigns to out parameters at the end of the function and we need
- * them to be set before the call to AsyncCall.return().
- */
-public void vala_interface_async_request (AsyncCall call, ref string message)
-{
-	message = "Bore da";
+	public MessageRequest (Rpc.AsyncCall _call, char **_message) {
+		call = _call;
+		message = _message;
+	}
 
-	call.return (null);
+	/* This function will be run inside the GLib main loop, so it will
+	 * be able to make Gtk+ calls etc.
+	 */
+	public bool main_loop_callback () {
+		print ("Inside the mainloop callback\n");
+		Thread.usleep (2 * 1000 * 1000);
+
+		*message = global_message;
+
+		print ("Got message: %s\n", (string)(*message));
+		call.return (null);
+
+		return false;
+	}
 }
 
 public class ValaServer: Object {
+	/* This class must be a singleton, because we are currently using
+	 * an implicit binding handle - therefore global state.
+	 */
+	static ValaServer instance = null;
+
+	static int counter = 0;
+
 	public ValaServer ()
 	{
 		Rpc.server_start (ValaInterface.spec, "vala-test-interface");
@@ -30,6 +45,28 @@ public class ValaServer: Object {
 	{
 		Rpc.server_stop ();
 	}
+
+	public static ValaServer get_instance ()
+	{
+		if (instance == null)
+			instance = new ValaServer ();
+		return instance;
+	}
+
+	[CCode (cname = "vala_interface_ping")]
+	public static int ping (string message)
+	{
+		stdout.printf ("%s\n", message);
+		return counter++;
+	}
+
+	[CCode (cname = "vala_interface_get_message")]
+	public static void get_message (AsyncCall call, char **message)
+	{
+		var request = new MessageRequest (call, ((char **)message));
+
+		Idle.add (request.main_loop_callback);
+	}
 }
 
 public int main (string[] args) {
@@ -37,7 +74,11 @@ public int main (string[] args) {
 
 	var server = new ValaServer();
 
-	Thread.usleep (1000 * 1000 * 10);
+	var main_loop = new MainLoop();
+
+	Timeout.add_seconds (10, (GLib.SourceFunc)main_loop.quit);
+
+	main_loop.run ();
 
 	return 0;
 }

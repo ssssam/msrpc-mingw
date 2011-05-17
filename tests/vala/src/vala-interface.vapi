@@ -14,6 +14,6 @@ namespace ValaInterface {
 	[CCode (cname = "vala_interface_ping")]
 	public int ping (string message);
 
-	[CCode (cname = "vala_interface_async_request")]
-	public void async_request (Rpc.AsyncCall call, ref string message);
+	[CCode (cname = "vala_interface_get_message")]
+	public void get_message (Rpc.AsyncCall call, char **message);
 }
