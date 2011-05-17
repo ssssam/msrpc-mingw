@@ -11,7 +11,7 @@ def build (bld):
 	kws = {
 		'msrpc_interface': ['src/vala.idl', 'src/vala.acf'],
 		'vapi_dirs': ['../../vapi', 'src'],
-		'packages': ['gio-2.0', 'rpc-1.0', 'vala-interface'],
+		'packages': ['gio-2.0', 'msrpc-1.0', 'vala-interface'],
 		'use': ['msrpc-glib2', 'msrpc-mingw'],
 		'uselib': 'RPC',
 		'includes': [local_msrpc_include_path, src_dir.get_bld()]

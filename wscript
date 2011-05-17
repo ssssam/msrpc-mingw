@@ -52,4 +52,6 @@ def build(bld):
 	bld.install_files('${BINDIR}', 'bin/midl-wrapper')
 	bld.install_files('${DATADIR}/aclocal', 'm4macros/msrpc-mingw-1.0.m4')
 
+	bld.install_files('${DATADIR}/vala-0.12/vapi', 'vapi/msrpc-1.0.vapi')
+
 	bld.recurse ('tests')
