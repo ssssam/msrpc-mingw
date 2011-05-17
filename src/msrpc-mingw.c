@@ -37,18 +37,18 @@ void __RPC_USER MIDL_user_free (void *user) {
 #define RPC_LOG_LEVEL_ERROR   (1<<2)
 
 typedef void (*RpcLogFunction) (const char *domain,
-                                  int         errorlevel,
-                                  const char *format,
-                                  va_list     args);
+                                int         errorlevel,
+                                const char *format,
+                                va_list     args);
 
 static RpcLogFunction log_function = rpc_default_log_function;
 
 static LPTOP_LEVEL_EXCEPTION_FILTER super_exception_handler;
 
 void rpc_default_log_function (const char *domain,
-                                 int         errorlevel,
-                                 const char *format,
-                                 va_list     args) {
+                               int         errorlevel,
+                               const char *format,
+                               va_list     args) {
 	vprintf (format, args);
 	exit (1);
 }
@@ -87,7 +87,7 @@ static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers) {
 static RPC_IF_HANDLE server_interface = NULL;
 
 int rpc_server_start (RPC_IF_HANDLE  interface_spec,
-                        const char    *endpoint_name) {
+                      const char    *endpoint_name) {
 	RPC_STATUS status;
 
 	status = RpcServerUseProtseqEp ("ncalrpc",  /* local RPC only */
@@ -129,7 +129,7 @@ void rpc_server_stop () {
 
 
 int rpc_client_bind (handle_t   *interface_handle,
-                       const char *endpoint_name) {
+                     const char *endpoint_name) {
 	RPC_STATUS status;
 	unsigned char *string_binding = NULL;
 
@@ -243,7 +243,7 @@ int rpc_async_call_cancel (RpcAsyncCall *call) {
 
 /* Return value from server side */
 void rpc_async_call_return (RpcAsyncCall *call,
-                              void           *return_value) {
+                            void           *return_value) {
 	RPC_STATUS status;
 
 	status = RpcAsyncCompleteCall (call, return_value);
@@ -255,7 +255,7 @@ void rpc_async_call_return (RpcAsyncCall *call,
 }
 
 void rpc_async_call_abort (RpcAsyncCall *call,
-                             int             reason) {
+                           int             reason) {
 	RPC_STATUS status;
 
 	status = RpcAsyncAbortCall (call, reason);
