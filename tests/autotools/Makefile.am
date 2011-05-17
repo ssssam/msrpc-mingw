@@ -15,6 +15,6 @@ BUILT_SOURCES = src/hello.h src/hello_s.c src/hello_c.c
 DISTCLEANFILES = ${BUILT_SOURCES}
 
 src/hello_s.c: src/hello.idl src/hello.acf
-	${AM_V_GEN} ${MIDL_WRAPPER} -o src -m ${MIDL} $^
+	${AM_V_GEN} ${MIDL_WRAPPER} -o src -m "${MIDL}" $^
 
 src/hello_c.c src/hello.h: src/hello_s.c
