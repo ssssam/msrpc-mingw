@@ -1,10 +1,30 @@
+* no longer true that msys has no lzcat - fix jhbuild
+  also fix the .bat error
+  and the WEIRD error when you compile ImageMagick ...
+* Stanley Milgram - read his books!
+
+w32api RPC patch on mingw bug tracker
+  https://sourceforge.net/tracker/?func=detail&aid=3302807&group_id=2435&atid=302435
+
 TO DO
- * midl in autotools :(
- * wrap the RPC calls in a simple library
- * build moonshot-ui and moonshot on win32:
-   https://gitorious.org/wingtkapp/pages/Home#Notes+and+To+Dos
-   and integrate this stuff!
- * release this package? blog, copyright etc.
+today
+
+ * integrate vala in moonshot-ui
+     - configure etc
+     - server
+ * what about races? perhaps in dbus you can run in glib main loop directly but
+   in Windows we definitely need a mutex
+ * test client
+wednesday: spare time ..
+ * DLL loader stub
+ * add -mwindows to remove console window
+ * installer - Wix or NSIS?
+ * systray icon?
+ * (if you finish strangely early) try to avoid making the server a
+   singleton by using an explicit binding handle ... this won't be fun.
+ * maybe autogenerate the interface.vapi as well...
+ * release msrpc-mingw package? blog, copyright etc.
+   -- at least comment the code better!
  * how can you package this so that client and server can access the code?
    how does this work with dbus? the service is *installed* by the server and
      the client assumes its existance.
@@ -15,16 +35,25 @@ TO DO
    Should we make all this depend on glib? The key point is main loop integration,
    is the RPC code going to have to interact with the main loop?
  * upload midl.exe and uuidgen.exe somewhere to save having to download the Windows SDK.
- * rework as installable library with example and tests
-
- * remember you won't be doing much more on this at UDS ...
+ * FIXME's
+  * Add configure checks for rpcasync.h, and notes on how to obtain the file -
+    maybe even host your own package for now? ask javier what the client needs
 
 Longer term:
-  * Fix mingw import lib for rpcrt4 so we can use the -Oicf MIDL flag; this requires
-    NdrServerCall2 which is missing from the import lib ..
+  * server - func should check for cancellation of the async request?
+    this is RpcServerTestCancel()
+  * generate the interface .vapi file automagically
+  * 64-bit Windows - I have no Win64 system available to test this so I can't work
+    on it, but here are some issues
+      - need separate jhbuild moduleset due to binary packages
   * Fix 'excess elements in struct initializer' errors (this could be the mingw headers
     being out of date).
   * Cross-compile support
+  * http://msdn.microsoft.com/en-us/library/aa373922%28v=VS.85%29.aspx
+    "using an [out] parameter instead of a return value for complex data types is
+     recommended. While returning complex data types, the MIDL compiler will generate
+     an /Os mode stub. As a result, all recent error-checking information provided
+     by /robust is lost."
 
 In the context of moonshot-ui:
 1. client calls getIdentity()
@@ -38,6 +67,7 @@ In the context of moonshot-ui:
 3. rpc_main_loop_callback() {
      trigger the same entry point as the Dbus method would have
    }
+
 
 9. why on earth is it not an asynchronous API eg.
      request_identity(identity_callback)
@@ -68,6 +98,16 @@ considerations:
  - test for common fail cases:
    -> server is already running/another process is providing the RPC service
 
+Notes
+-----
+
+* The tests probably require some parts of msrpc-mingw to be installed at the 
+  moment, should be possible to fix this with waf hacks
+
+* implicit binding handles only, see:
+     http://msdn.microsoft.com/en-us/library/aa373566%28v=VS.85%29.aspx
+  This is purely to simplify the implementation. To get them, add 
+    [ implicit_handle (handle_t hello_interface_handle)
 
 Done
 ----
@@ -86,11 +126,6 @@ Done
     msys-wget
     msys-vim
 
-* Install Python 3.2:
-    http://python.org/ftp/python/3.2/python-3.2.msi
-
-  -> c:\tools\python
-
 * Install Windows SDK:
     http://www.microsoft.com/downloads/en/details.aspx?FamilyID=c17ba869-9671-4330-a63e-1fd44e0e2505
 
@@ -101,8 +136,10 @@ Done
     Bin/uuidgen.exe (only to generate an ID for the interface)
     Bin/midl.exe (to generate C code to drive interface)
 
-export PATH=/c/tools/python:/c/Program\ Files/Microsoft\ Visual\ Studio\ 9.0/Common7/IDE:/c/Program\ Files/Microsoft\ Visual\ Studio\ 9.0/VC/bin:$PATH
+* Get jhbuild and jhbuild bootstrap
+    
 
+export PATH=/c/build/bin:/c/tools/python:$PATH
 
 TODO
 
@@ -129,6 +166,9 @@ To generate interface skeleton:
 To compile interface:
   bin/midl-wrapper hello.idl
 
+The model: require midl.exe for building from git only; tarball should
+distribute the files. THEREFORE make clean should not remove the
+generated files, but make distclean should ..
 
 Running-as-a-service
 --------------------
@@ -306,6 +346,8 @@ Named pipes:
 RPC:
   http://www.codeproject.com/KB/IP/rpcintro1.aspx
   http://www.codeproject.com/KB/IP/rpcintro2.aspx
+
+  http://www.archive.org/stream/microsoftrpc00shirmiss
 
 SECURITY:
   "Writing a Secure RPC Client or Server"
