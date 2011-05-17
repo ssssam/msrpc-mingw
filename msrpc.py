@@ -17,6 +17,14 @@ import os
 from waflib import Task
 from waflib.TaskGen import before_method, feature, taskgen_method
 
+def header_already_exists(self, c_header):
+	for group in self.bld.groups:
+		for task_gen in group:
+			for task in getattr(task_gen, 'tasks', []):
+				if c_header in task.outputs:
+					return True
+	return False
+
 def process_msrpc_interface(self, type):
 	"""
 	Process the IDL files in *msrpc_interface_for_client* or
@@ -30,24 +38,16 @@ def process_msrpc_interface(self, type):
 
 	idl_file_node = source_list[0]
 	if type=='server':
-		c_stub_node = idl_file_node.change_ext('_s.c')
+		c_stub_node = idl_file_node.change_ext('_s.c').get_bld()
 	elif type=='client':
-		c_stub_node = idl_file_node.change_ext('_c.c')
+		c_stub_node = idl_file_node.change_ext('_c.c').get_bld()
 	output_list = [c_stub_node]
 
-	c_header = idl_file_node.change_ext('.h')
+	c_header = idl_file_node.change_ext('.h').get_bld()
 
 	# Identical header gets created by both client and server tasks;
 	# ignore it the second time or waf raises an error.
-	header_exists = False
-	for group in self.bld.groups:
-		for task_gen in group:
-			for task in getattr(task_gen, 'tasks', []):
-				if c_header in task.outputs:
-					header_exists = True
-					break
-
-	if not header_exists:
+	if not header_already_exists(self, c_header):
 		output_list.append (c_header) 
 
 	midl_task = self.create_task('midl', source_list, output_list)

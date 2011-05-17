@@ -32,7 +32,7 @@ MIDL_OPTIONS="-nologo $MIDL_C_OPTIONS $MIDL_STUB_MODE"
 
 while [ $# -gt 0 ]; do
   if [ "$1" = "-o" ]; then
-    output_path=$2
+    output_path=`cd $2; pwd`
     MIDL_OPTIONS="-out $output_path $MIDL_OPTIONS"
     shift 2
   elif [ "$1" = "-m" ]; then
