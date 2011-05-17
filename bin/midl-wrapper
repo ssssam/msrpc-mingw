@@ -71,7 +71,7 @@ fi
 
 acf_file=$2
 
-if [ -e $acf_file ]; then
+if [ "$acf_file" != "" ] && [ -e $acf_file ]; then
   MIDL_OPTIONS="$MIDL_OPTIONS -acf $acf_file"
 fi
 
@@ -86,6 +86,9 @@ fi
 ##
 ## Execution
 ##
+
+# Setting TMP in MSYS breaks MIDL.EXE (and other things)
+TMP=/tmp
 
 "$MIDL" $MIDL_OPTIONS $idl_file | sed -e /^Processing.*/d
 
