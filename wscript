@@ -9,6 +9,8 @@ def options(opt):
 def configure(conf):
 	conf.check_tool ('gcc gnu_dirs msrpc')
 
+	conf.check_cfg (package='glib-2.0', uselib_store='GLIB', args=['--cflags', '--libs'])
+
 	conf.check_tool ('vala')
 
 	# We do this manually; real users of the waf plugin will include the
@@ -23,17 +25,28 @@ def configure(conf):
 
 def build(bld):
 	bld (features     = 'c cstlib',
-	     # FIXME: this work when called from outside base dir ..
-	     source       = bld.path.ant_glob('src/*.c'),
+	     source       = 'src/msrpc-mingw.c',
 	     target       = 'msrpc-mingw',
 	     install_path = '${LIBDIR}')
 
+	bld (features     = 'c cstlib',
+	     # FIXME: does this work when called from outside base dir?
+	     source       = 'src/msrpc-glib2.c',
+	     target       = 'msrpc-glib2',
+	     uselib       = 'GLIB',
+	     install_path = '${LIBDIR}')
+
 	bld.install_files('${INCLUDEDIR}', 'src/msrpc-mingw.h')
+	bld.install_files('${INCLUDEDIR}', 'src/msrpc-glib2.h')
 
 	if bld.is_install:
 		bld (rule="""sed -e 's#@prefix@#${PREFIX}#' -e 's#@libdir@#${LIBDIR}#' -e 's#@bindir@#${BINDIR}#' -e 's#@version@#%s#' < ${SRC} > ${TGT}""" % VERSION,
 		     source='msrpc-mingw-1.0.pc.in',
 		     target='msrpc-mingw-1.0.pc',
+		     install_path='${LIBDIR}/pkgconfig')
+		bld (rule="""sed -e 's#@prefix@#${PREFIX}#' -e 's#@libdir@#${LIBDIR}#' -e 's#@bindir@#${BINDIR}#' -e 's#@version@#%s#' < ${SRC} > ${TGT}""" % VERSION,
+		     source='msrpc-glib2-1.0.pc.in',
+		     target='msrpc-glib2-1.0.pc',
 		     install_path='${LIBDIR}/pkgconfig')
 
 	bld.install_files('${BINDIR}', 'bin/midl-wrapper')

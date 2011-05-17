@@ -5,6 +5,14 @@
 
 #include <stdio.h>
 
+void *__RPC_USER MIDL_user_allocate (size_t size) {
+	return malloc (size);
+}
+
+void __RPC_USER MIDL_user_free (void *user) {
+	free (user);
+}
+
 int main () {
 	RpcAsyncCall   async_call;
 	RPC_STATUS     status;

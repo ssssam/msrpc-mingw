@@ -33,6 +33,8 @@ public class ValaServer: Object {
 }
 
 public int main (string[] args) {
+	Rpc.init ();
+
 	var server = new ValaServer();
 
 	Thread.usleep (1000 * 1000 * 10);

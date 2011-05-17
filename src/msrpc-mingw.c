@@ -9,20 +9,6 @@
 #include <stdio.h>
 
 
-/* Memory management stubs
- * -----------------------
- */
-
-void *__RPC_USER MIDL_user_allocate (size_t size) {
-	return malloc (size);
-}
-
-void __RPC_USER MIDL_user_free (void *user) {
-	free (user);
-}
-
-
-
 /* Error handling
  * --------------
  *
@@ -36,11 +22,6 @@ void __RPC_USER MIDL_user_free (void *user) {
 
 #define RPC_LOG_LEVEL_ERROR   (1<<2)
 
-typedef void (*RpcLogFunction) (const char *domain,
-                                int         errorlevel,
-                                const char *format,
-                                va_list     args);
-
 static RpcLogFunction log_function = rpc_default_log_function;
 
 static LPTOP_LEVEL_EXCEPTION_FILTER super_exception_handler;
@@ -53,10 +34,14 @@ void rpc_default_log_function (const char *domain,
 	exit (1);
 }
 
+void rpc_set_log_function (RpcLogFunction _log_function) {
+	log_function = _log_function;
+}
+
 void rpc_log_error (const char *format, ...) {
 	va_list args;
 	va_start (args, format);
-	log_function ("msrpc", RPC_LOG_LEVEL_ERROR, format, args);
+	log_function ("Microsoft RPC", RPC_LOG_LEVEL_ERROR, format, args);
 	va_end (args);
 }
 

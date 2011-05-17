@@ -1,6 +1,15 @@
 [CCode (cprefix = "rpc_", cheader_filename = "msrpc-mingw.h")]
 
 namespace Rpc {
+
+	/* GLib integration */
+
+	[CCode (cname = "rpc_glib2_init")]
+	public void init ();
+
+
+	/* Generic logging API */
+
 	[CCode (cname = "rpc_default_log_function")]
 	public void default_log_function (string domain, int errorlevel, string format, va_list args);
 
@@ -11,6 +20,8 @@ namespace Rpc {
 	[CCode (cname = "rpc_log_error_from_status")]
 	public void log_error_from_status (uint32 status);
 
+
+	/* Client and server setup */
 
 	[CCode (cname = "RPC_IF_HANDLE")]
 	[SimpleType]
@@ -34,7 +45,9 @@ namespace Rpc {
 	[CCode (cname = "rpc_client_unbind")]
 	public void client_unbind (ref BindingHandle binding_handle);
 
-	/* FIXME: how to avoid Vala trying to free this??? */
+
+	/* Async calls */
+
 	[CCode (cname = "RpcAsyncCall")]
 	public struct AsyncCall {
 		[CCode (cname = "rpc_async_call_init")]

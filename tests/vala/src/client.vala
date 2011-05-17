@@ -12,6 +12,8 @@ public class ValaClient: Object {
 }
 
 public int main (string[] args) {
+	Rpc.init ();
+
 	var client = new ValaClient();
 
 	for (int i=0; i<5; i++)

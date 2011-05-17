@@ -5,7 +5,13 @@
 
 #include <stdarg.h>
 
+typedef void (*RpcLogFunction) (const char *domain,
+                                int         errorlevel,
+                                const char *format,
+                                va_list     args);
+
 void rpc_default_log_function  (const char *domain, int errorlevel, const char *format, va_list args);
+void rpc_set_log_function      (RpcLogFunction _log_function);
 
 void rpc_log_error             (const char *format, ...);
 void rpc_log_error_from_status (DWORD status);
