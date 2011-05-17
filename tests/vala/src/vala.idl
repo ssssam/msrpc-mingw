@@ -1,0 +1,9 @@
+[
+  uuid(39084948-f145-4b3e-bdc0-1970dc7f580a),
+  version(1.0)
+]
+interface vala
+{
+  int vala_interface_ping ([in, string] const char *message);
+  void vala_interface_async_request ([out, string] char **message);
+}

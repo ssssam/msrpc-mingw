@@ -9,6 +9,8 @@ def options(opt):
 def configure(conf):
 	conf.check_tool ('gcc gnu_dirs msrpc')
 
+	conf.check_tool ('vala')
+
 	# We do this manually; real users of the waf plugin will include the
 	# pkg-config file which defines all this.
 	conf.env['DEFINES_RPC'] = 'TARGET_IS_NT50_OR_LATER'

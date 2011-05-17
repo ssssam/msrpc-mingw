@@ -1,0 +1,29 @@
+def build (bld):
+	# msrpc-mingw/tests/vala/src
+	src_dir = bld.path.find_dir('src')
+
+	# msrpc-mingw/src
+	local_msrpc_include_path = bld.root.find_dir('src').relpath()
+
+	# msrpc-mingw/src
+	vapi_path = bld.root.find_dir('vapi').abspath()
+
+	bld (features = 'c cprogram msrpc_client',
+	     source = 'src/client.vala',
+	     msrpc_interface = ['src/vala.idl', 'src/vala.acf'],
+	     target = 'client',
+	     vapi_dirs = ['../../vapi', 'src'],
+	     packages = ['gio-2.0', 'rpc-1.0', 'vala-interface'],
+	     use = 'msrpc-mingw',
+	     uselib = 'RPC',
+	     includes = [local_msrpc_include_path, src_dir.get_bld()])
+
+	bld (features = 'c cprogram msrpc_server',
+	     source = 'src/server.vala',
+	     msrpc_interface = ['src/vala.idl', 'src/vala.acf'],
+	     target = 'server',
+	     vapi_dirs = ['../../vapi', 'src'],
+	     packages = ['gio-2.0', 'rpc-1.0', 'vala-interface'],
+	     use = 'msrpc-mingw',
+	     uselib = 'RPC',
+	     includes = [local_msrpc_include_path, src_dir.get_bld()])

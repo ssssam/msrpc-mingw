@@ -1,3 +1,5 @@
 def build (bld):
 	bld.recurse ('async')
 
+	if bld.env['VALAC']:
+		bld.recurse ('vala')
