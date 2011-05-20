@@ -20,6 +20,8 @@ def configure(conf):
 	conf.env['INCLUDES'] = 'd:/codethink/w32api-3.17-2-mingw32/include'
 	conf.env['LIB_RPC'] = 'rpcrt4'
 
+	conf.env['CFLAGS'] = '-g'
+
 	# Prevent gcc4 crashes
 	conf.env['LDFLAGS'] = '-Wl,--enable-auto-import'
 
