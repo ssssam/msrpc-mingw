@@ -20,13 +20,13 @@ public int main (string[] args) {
 		print ("%i\n", ValaInterface.ping ("Ping"));
 
 	Rpc.AsyncCall call = Rpc.AsyncCall ();
-	string message = null;
+	char *message = null;
 
-	ValaInterface.get_message (call, ref message);
+	ValaInterface.get_message (call, &message);
 
 	call.complete ();
 
-	print ("Got message: %s\n", message);
+	print ("Got message: %s\n", (string)message);
 
 	return 0;
 }
