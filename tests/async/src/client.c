@@ -18,6 +18,7 @@ int main () {
 	RPC_STATUS     status;
 	DWORD          wait_result;
 	unsigned char *message;
+	int            counter = 0;
 	int            cancelled;
 
 	rpc_client_bind (&async_rpc_interface_handle, DEFAULT_ENDPOINT);
@@ -36,9 +37,9 @@ int main () {
 
 	async_query (&async_call, "Frank", &message);
 
-	rpc_async_call_complete (&async_call);
+	rpc_async_call_complete (&async_call, &counter);
 
-	printf ("%x -> %s (%i)\n", (int)message, message, strlen(message));
+	printf ("%x -> %s (%i) - %i\n", (int)message, message, strlen(message), counter);
 	MIDL_user_free (message);
 
 	rpc_async_call_init (&async_call);

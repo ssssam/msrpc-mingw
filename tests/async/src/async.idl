@@ -9,7 +9,7 @@ interface AsyncRPC
     void sync_query ([in, string]  unsigned char  *name,
                      [out, string] unsigned char **message);
 
-    void async_query ([in, string]  unsigned char  *name,
+    int  async_query ([in, string]  unsigned char  *name,
                       [out, string] unsigned char **message);
 
     void black_hole ();

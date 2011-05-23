@@ -13,6 +13,8 @@ void __RPC_USER MIDL_user_free (void *user) {
 	free (user);
 }
 
+static int counter = 0;
+
 void async_query (RpcAsyncCall  *async_call,
                   unsigned char   *name,
                   unsigned char  **message) {
@@ -23,7 +25,8 @@ void async_query (RpcAsyncCall  *async_call,
 
 	printf ("Got async call from %s\n", name);
 
-	rpc_async_call_return (async_call, NULL);
+	counter ++;
+	rpc_async_call_return (async_call, &counter);
 }
 
 void sync_query (unsigned char    *name,
