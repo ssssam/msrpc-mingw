@@ -178,28 +178,32 @@ void rpc_async_call_init (RpcAsyncCall *call) {
 }
 
 /* Wait for completion and return result, client side */
-void *rpc_async_call_complete (RpcAsyncCall *call) {
+void rpc_async_call_complete (RpcAsyncCall *call, 
+                              void         *return_value) {
 	DWORD      result;
 	RPC_STATUS status;
-	LPVOID     return_value = NULL;
 
 	result = WaitForSingleObject (call->u.hEvent, INFINITE);
 
 	if (result != WAIT_OBJECT_0) {
 		rpc_log_error_from_status (result);
-		return NULL;
+		return;
 	}
 
-	status = RpcAsyncCompleteCall (call, &return_value);
+	status = RpcAsyncCompleteCall (call, return_value);
 
 	if (status != RPC_S_OK) {
 		rpc_log_error_from_status (status);
-		return NULL;
+		return;
 	}
 
 	CloseHandle (call->u.hEvent);
+}
 
-	return return_value;
+int rpc_async_call_complete_int (RpcAsyncCall *call) {
+	int result = 0;
+	rpc_async_call_complete (call, &result);
+	return result;
 }
 
 int rpc_async_call_cancel (RpcAsyncCall *call) {

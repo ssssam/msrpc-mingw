@@ -26,10 +26,11 @@ void rpc_client_unbind         (handle_t *interface_handle);
 typedef RPC_ASYNC_STATE RpcAsyncCall;
 
 /* Client-side API */
-void  rpc_async_call_init     (RpcAsyncCall *call);
-void *rpc_async_call_complete (RpcAsyncCall *call);
-int   rpc_async_call_cancel   (RpcAsyncCall *call);
+void rpc_async_call_init         (RpcAsyncCall *call);
+void rpc_async_call_complete     (RpcAsyncCall *call, void *return_value);
+int  rpc_async_call_complete_int (RpcAsyncCall *call);
+int  rpc_async_call_cancel       (RpcAsyncCall *call);
 
 /* Server-side API */
-void  rpc_async_call_return       (RpcAsyncCall *call, void *result);
-int   rpc_async_call_is_cancelled (RpcAsyncCall *call);
+void rpc_async_call_return       (RpcAsyncCall *call, void *result);
+int  rpc_async_call_is_cancelled (RpcAsyncCall *call);

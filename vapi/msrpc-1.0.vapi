@@ -54,7 +54,13 @@ namespace Rpc {
 		public AsyncCall ();
 
 		[CCode (cname = "rpc_async_call_complete")]
-		public void *complete ();
+		public void complete (void *data);
+
+		[CCode (cname = "rpc_async_call_complete_int")]
+		public bool complete_bool ();
+
+		[CCode (cname = "rpc_async_call_complete_int")]
+		public int complete_int ();
 
 		[CCode (cname = "rpc_async_call_cancel")]
 		public void cancel ();
