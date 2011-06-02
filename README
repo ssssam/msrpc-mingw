@@ -4,7 +4,7 @@ This is a package to make it simpler to use Microsoft RPC from the mingw
 compiler.
 
 
-Components:
+* Components:
 
 bin/midl-wrapper:
   helper script which runs MIDL.EXE (the MS interface compiler) and cleans
@@ -29,8 +29,11 @@ msrpc-glib2 library:
 vapi/msrpc-1.0.vapi
   Vala integration
 
+rpctester:
+  Program used to run the tests.
 
-Requirements:
+
+* Requirements:
 
 You currently need to patch the mingw w32api package (which provides the
 C headers and libraries for the Windows API) to add some missing RPC functions.
@@ -46,12 +49,7 @@ your mingw base directory:
   http://afuera.me.uk/junk/w32api-3.17-2-mingw-patch3302807-dev.tar.lzma
 
 
-Still to do:
-
-- Automate the tests
-
-
-Further reading:
+* Further reading:
 
 Tutorial:
   http://msdn.microsoft.com/en-us/library/aa379010%28v=VS.85%29.aspx
@@ -63,7 +61,7 @@ Security considerations:
   http://msdn.microsoft.com/en-us/library/aa379441%28v=vs.85%29.aspx
 
 
-Why not use DBus?
+* Why not use DBus?
 
 DBus is a system component. An ideal port of DBus to Windows would maintain
 the interface while using MS RPC underneath; it's simply wrong to require
@@ -71,6 +69,6 @@ another system service to be running on Windows which doesn't belong there.
 Since this doesn't exist, the next-best thing is to use MS RPC directly.
 
 
-Why not use DCOM?
+* Why not use DCOM?
 
 DCOM is actually built on top of MS RPC.
