@@ -29,8 +29,9 @@ msrpc-glib2 library:
 vapi/msrpc-1.0.vapi
   Vala integration
 
-rpctester:
-  Program used to run the tests.
+tests/:
+  Functional tests, with test runner to coordinate the client & server
+  processes.
 
 
 * Requirements:
