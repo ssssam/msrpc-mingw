@@ -153,7 +153,12 @@ int main (int   argc,
 	/* Run client */
 	h_client = exec (argv[2], &h_client_output);
 
-	result = WaitForSingleObject (h_client, 2000);
+	result = WaitForSingleObject (h_client, 5000);
+
+	if (result == WAIT_TIMEOUT) {
+		dump (h_client_output);
+		rpc_log_error ("Waiting for client timed out");
+	}
 
 	if (result != WAIT_OBJECT_0)
 		rpc_log_error_from_status (GetLastError ());

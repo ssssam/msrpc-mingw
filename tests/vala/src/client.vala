@@ -24,9 +24,10 @@ public int main (string[] args) {
 
 	ValaInterface.get_message (call, &message);
 
-	call.complete (0);
+	call.complete (null);
 
 	print ("Got message: %s\n", (string)message);
+	print ("client: success\n");
 
 	return 0;
 }

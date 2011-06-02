@@ -1,5 +1,3 @@
-import Logs
-
 import os
 
 def build (bld):
@@ -26,26 +24,10 @@ def build (bld):
 	     includes = [local_msrpc_include_path, src_dir.get_bld()])
 
 def check (bld):
-	tester = bld.get_tgen_by_name ('rpctester')
-	tester_path = os.path.join (tester.path.get_bld().abspath(), tester.target)
-
 	# FIXME: hardcoded because we don't execute the build() command so the
 	# actual targets do not exist
 
 	server_path = os.path.join (bld.path.get_bld().abspath(), 'server.exe')
 	client_path = os.path.join (bld.path.get_bld().abspath(), 'client.exe')
 
-	result = bld.exec_command ("%s %s %s" % (tester_path, server_path, client_path))
-
-	if result == 0:
-		Logs.info ("%s: PASSED\n" % bld.path)
-	else:
-		Logs.warn ("%s: FAILED\n" % bld.path)
-
-	# How to do this:
-	#  1. launch server using Popen
-	#  2. wait for output "Server running"
-	#  3. launch client
-	#  4. check for server output
-	#  5. check for client output
-	#  6. yay!
+	bld.run_tester ("async", "%s %s" % (server_path, client_path))

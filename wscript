@@ -1,3 +1,7 @@
+import Logs
+
+import os
+
 APPNAME = 'msrpc-mingw'
 VERSION = '0.1.0'
 bld = 'build'
@@ -86,3 +90,14 @@ from waflib.Build import BuildContext
 class check_context(BuildContext):
 	cmd = 'check'
 	fun = 'check'
+
+	def run_tester(self, test_name, args):
+		tester = self.get_tgen_by_name ('rpctester')
+		tester_path = os.path.join (tester.path.get_bld().abspath(), tester.target)
+
+		result = self.exec_command ("%s %s" % (tester_path, args))
+
+		if result == 0:
+			Logs.info ("%s: PASSED" % test_name)
+		else:
+			Logs.warn ("%s: FAILED" % test_name)

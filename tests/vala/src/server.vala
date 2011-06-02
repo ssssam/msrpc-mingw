@@ -78,6 +78,9 @@ public int main (string[] args) {
 
 	Timeout.add_seconds (10, (GLib.SourceFunc)main_loop.quit);
 
+	print ("server: listening\n");
+	stdout.flush ();
+
 	main_loop.run ();
 
 	return 0;
