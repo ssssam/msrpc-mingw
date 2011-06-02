@@ -76,10 +76,11 @@ def check (bld):
 	build_libs (bld)
 
 	tester = bld (features = 'c cprogram',
-	              source   = 'src/rpctester.c',
+	              source   = 'tests/rpctester.c',
 	              target   = 'rpctester',
 	              use      = 'msrpc-mingw',
-	              uselib   = 'RPC')
+	              uselib   = 'RPC',
+	              includes = 'src')
 
 	bld.add_post_fun (check_action)
 
