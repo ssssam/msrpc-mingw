@@ -25,7 +25,7 @@ def configure(conf):
 	# Prevent gcc4 crashes
 	conf.env['LDFLAGS'] = '-Wl,--enable-auto-import'
 
-def build(bld):
+def build_libs (bld):
 	bld (features     = 'c cstlib',
 	     source       = 'src/msrpc-mingw.c',
 	     target       = 'msrpc-mingw',
@@ -37,6 +37,9 @@ def build(bld):
 	     target       = 'msrpc-glib2',
 	     uselib       = 'GLIB',
 	     install_path = '${LIBDIR}')
+
+def build(bld):
+	build_libs (bld)
 
 	bld.install_files('${INCLUDEDIR}', 'src/msrpc-mingw.h')
 	bld.install_files('${INCLUDEDIR}', 'src/msrpc-glib2.h')
@@ -56,3 +59,30 @@ def build(bld):
 	bld.install_files('${DATADIR}/vala-0.12/vapi', 'vapi/msrpc-1.0.vapi')
 
 	bld.recurse ('tests')
+
+
+def check (bld):
+	# FIXME: it would be nice if check would automatically run build, but
+	# it seems that 'recurse' can only happen once per execution. Maybe if
+	# we could spoof the actual command invocation ...
+	#bld.fun = 'build'
+	#build (bld)
+
+	# Which is why this is necessary ...
+	build_libs (bld)
+
+	tester = bld (features = 'c cprogram',
+	              source   = 'src/rpctester.c',
+	              target   = 'rpctester',
+	              use      = 'msrpc-mingw',
+	              uselib   = 'RPC')
+
+	bld.add_post_fun (check_action)
+
+def check_action (bld):
+	bld.recurse ('tests')
+
+from waflib.Build import BuildContext
+class check_context(BuildContext):
+	cmd = 'check'
+	fun = 'check'

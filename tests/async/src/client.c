@@ -50,4 +50,6 @@ int main () {
 	printf ("client: Cancel completed: %i\n", cancelled);
 
 	rpc_client_unbind (&async_rpc_interface_handle);
+
+	printf ("client: success\n");
 }
