@@ -49,6 +49,10 @@ Alternatively, here is a ready-patched version which you can just unzip inside
 your mingw base directory:
   http://afuera.me.uk/junk/w32api-3.17-2-mingw-patch3302807-dev.tar.lzma
 
+You also must have a copy of MIDL.EXE from the Windows SDK. This is available here:
+  https://www.microsoft.com/downloads/en/details.aspx?FamilyID=c17ba869-9671-4330-a63e-1fd44e0e2505&displaylang=en
+
+You need only install the 'Win32 developer tools' component.
 
 * Further reading:
 
