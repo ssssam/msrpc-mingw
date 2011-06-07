@@ -16,7 +16,12 @@ void rpc_set_log_function      (RpcLogFunction _log_function);
 void rpc_log_error             (const char *format, ...);
 void rpc_log_error_from_status (DWORD status);
 
-int  rpc_server_start          (RPC_IF_HANDLE interface_spec, const char *endpoint_name);
+typedef enum {
+	RPC_PER_SYSTEM = 0,
+	RPC_PER_USER = 1
+} RpcServerFlags;
+
+int  rpc_server_start          (RPC_IF_HANDLE interface_spec, const char *endpoint_name, RpcServerFlags flags);
 void rpc_server_stop           ();
 
 int  rpc_client_bind           (handle_t *interface_handle, const char *endpoint_name);

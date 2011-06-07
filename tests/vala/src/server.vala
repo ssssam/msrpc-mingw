@@ -38,7 +38,7 @@ public class ValaServer: Object {
 
 	public ValaServer ()
 	{
-		Rpc.server_start (ValaInterface.spec, "vala-test-interface");
+		Rpc.server_start (ValaInterface.spec, "vala-test-interface", 0);
 	}
 
 	~ValaServer ()

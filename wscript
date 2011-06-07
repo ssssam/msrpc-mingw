@@ -22,7 +22,7 @@ def configure(conf):
 	conf.env['DEFINES_RPC'] = 'TARGET_IS_NT50_OR_LATER'
 	conf.env['LIBPATH_RPC'] = 'd:/codethink/w32api-3.17-2-mingw32/lib'
 	conf.env['INCLUDES'] = 'd:/codethink/w32api-3.17-2-mingw32/include'
-	conf.env['LIB_RPC'] = 'rpcrt4'
+	conf.env['LIB_RPC'] = ['rpcrt4']
 
 	conf.env['CFLAGS'] = '-g'
 

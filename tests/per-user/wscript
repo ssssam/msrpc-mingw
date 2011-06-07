@@ -1,0 +1,35 @@
+import os
+
+def build (bld):
+	# msrpc-mingw/tests/per-user/src
+	src_dir = bld.path.find_dir('src')
+
+	# msrpc-mingw/src
+	local_msrpc_include_path = bld.root.find_dir('src').relpath()
+
+	kws = {
+		'msrpc_interface': ['src/peruser.idl', 'src/peruser.acf'],
+		'use': 'msrpc-mingw',
+		'uselib': 'RPC',
+		'includes': [local_msrpc_include_path, src_dir.get_bld()]
+	}
+
+	#bld (features = 'c cprogram msrpc_client',
+	#     source = 'src/client.c',
+	#     target = 'client',
+	#     **kws)
+
+	bld (features = 'c cprogram msrpc_server',
+	     source = 'src/server.c',
+	     target = 'server',
+	     **kws)
+
+def check (bld):
+	# FIXME: hardcoded because we don't execute the build() command so the
+	# actual targets do not exist
+
+	server_path = os.path.join (bld.path.get_bld().abspath(), 'server.exe')
+	#client_path = os.path.join (bld.path.get_bld().abspath(), 'client.exe')
+
+	bld.run_tester ("per-user", "--multiuser %s" % server_path)
+

@@ -8,6 +8,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#define RPC_ENDPOINT_MAX_LENGTH  52
 
 /* Error handling
  * --------------
@@ -63,22 +64,91 @@ static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers) {
 }
 
 
+
+/* make_endpoint_name_unique:
+ *
+ * Append the logon session identifier, a locally unique ID, to the
+ * endpoint name so that it is unique per-session.
+ */
+static int make_endpoint_name_unique (const char  *prefix,
+                                      char        *output_buffer) {
+	HANDLE           process_access_token;
+	TOKEN_STATISTICS token_data;
+
+	BOOL  success;
+	DWORD length;
+
+	if (strlen (prefix) + 6 >= RPC_ENDPOINT_MAX_LENGTH) {
+		rpc_log_error ("Warning: endpoint name %s is too long to reliably make "
+		               "unique per-user (maximum endpoint name is %i",
+		               RPC_ENDPOINT_MAX_LENGTH);
+		return -1;
+	}
+
+	success = OpenProcessToken (GetCurrentProcess(), TOKEN_QUERY, &process_access_token);
+
+	if (! success) {
+		rpc_log_error_from_status (GetLastError ());
+		return GetLastError ();
+	}
+
+	success = GetTokenInformation (process_access_token,
+	                               TokenStatistics,
+	                               &token_data,
+	                               sizeof (TOKEN_STATISTICS),
+	                               &length);
+
+	if (! success) {
+		rpc_log_error_from_status (GetLastError ());
+		return GetLastError ();
+	}
+
+	snprintf (output_buffer + 1,
+	          RPC_ENDPOINT_MAX_LENGTH,
+	          "%x.%lx@%s",
+	          token_data.AuthenticationId.LowPart,
+	          token_data.AuthenticationId.HighPart,
+	          prefix);
+
+	return 0;
+}
+
 /* Init and shutdown
  * -----------------
  *
- * Any errors will result in the rpc_log function being called.
+ * Any errors will result in the rpc_log() function being called.
  */
 
 static RPC_IF_HANDLE server_interface = NULL;
 
 int rpc_server_start (RPC_IF_HANDLE  interface_spec,
-                      const char    *endpoint_name) {
-	RPC_STATUS status;
+                      const char    *endpoint_name,
+                      RpcServerFlags flags) {
+	char        unique_endpoint_name[RPC_ENDPOINT_MAX_LENGTH + 1];
+	RPC_STATUS  status;
 
+	if (flags & RPC_PER_USER) {
+		status = make_endpoint_name_unique (endpoint_name, unique_endpoint_name);
+
+		if (status != 0)
+			return status;
+
+		endpoint_name = unique_endpoint_name;
+	}
+
+	/* No access control is used on the endpoint itself, even if the
+	 * server is per-user, as recommended by MSDN:
+	 *
+	 *   "At best, this method is a waste of CPU resources. At worst, in
+	 *    many environments it is possible to circumvent the security
+	 *    descriptor"
+	 *
+	 *   -- http://msdn.microsoft.com/en-us/library/aa373774(v=VS.85).aspx
+	 */
 	status = RpcServerUseProtseqEp ("ncalrpc",  /* local RPC only */
 	                                RPC_C_LISTEN_MAX_CALLS_DEFAULT,
 	                                (LPSTR)endpoint_name,
-	                                NULL  /* FIXME: access control */);
+	                                NULL);
 
 	if (status) {
 		rpc_log_error_from_status (status);
@@ -103,13 +173,25 @@ int rpc_server_start (RPC_IF_HANDLE  interface_spec,
 }
 
 void rpc_server_stop () {
+	RPC_STATUS status;
+
 	if (server_interface == NULL)
 		return;
 
-	RpcMgmtStopServerListening (NULL);
+	status = RpcMgmtStopServerListening (NULL);
+
+	if (status) {
+		rpc_log_error_from_status (status);
+		return;
+	}
 
 	/* This function will block until all in-progress RPC calls have completed */
-	RpcServerUnregisterIf (server_interface, NULL, TRUE);
+	status = RpcServerUnregisterIf (server_interface, NULL, TRUE);
+
+	if (status) {
+		rpc_log_error_from_status (status);
+		return;
+	}
 }
 
 

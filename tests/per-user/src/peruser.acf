@@ -1,0 +1,5 @@
+[
+  implicit_handle (handle_t peruser_interface_handle)
+]
+interface peruser {
+}

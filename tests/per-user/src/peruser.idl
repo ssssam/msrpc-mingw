@@ -1,0 +1,10 @@
+[ 
+    uuid (b662e58c-b529-426c-85be-a1f2d75ae099),
+    version(1.0),
+]
+interface PerUserRPC
+{
+    const char *DEFAULT_ENDPOINT = "this-endpoint-name-is-super-long";
+
+    void tell_me_a_secret ([out, string] char **message);
+}

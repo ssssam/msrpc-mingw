@@ -4,9 +4,12 @@ def build (bld):
 	if bld.env['VALAC']:
 		bld.recurse ('vala')
 
+	bld.recurse ('per-user')
+
 def check (bld):
 	bld.recurse ('async')
 
 	if bld.env['VALAC']:
 		bld.recurse ('vala')
 
+	bld.recurse ('per-user')

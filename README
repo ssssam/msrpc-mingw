@@ -31,7 +31,7 @@ vapi/msrpc-1.0.vapi
 
 tests/:
   Functional tests, with test runner to coordinate the client & server
-  processes.
+  processes. See section 'testing'.
 
 
 * Requirements:
@@ -53,6 +53,24 @@ You also must have a copy of MIDL.EXE from the Windows SDK. This is available he
   https://www.microsoft.com/downloads/en/details.aspx?FamilyID=c17ba869-9671-4330-a63e-1fd44e0e2505&displaylang=en
 
 You need only install the 'Win32 developer tools' component.
+
+
+* Testing:
+
+To run the automated tests, make sure the build is up to date by running
+'./waf' and then run './waf check'.
+
+To test multi-user security, the rpctester program needs a dummy account
+set up. This must be done manually: first, go to Control Panel > User
+Accounts and create a new user account named 'test' (it does not need to
+be an administrator). Create a password for it to be 'test'. Secondly,
+run the policy editor SECPOL.MSC and go to Local Policies > User Rights
+Assignment. In here, click on 'Replace a process level token' and add
+'test' to the list. This allows rpctester.exe to use the
+CreateProcessAsUser() API call to run one instance of the server as your
+account and one as the test user, and check that the one cannot be
+accessed from by other.
+
 
 * Further reading:
 
