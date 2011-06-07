@@ -29,7 +29,8 @@ def check (bld):
 	# actual targets do not exist
 
 	server_path = os.path.join (bld.path.get_bld().abspath(), 'server.exe')
-	#client_path = os.path.join (bld.path.get_bld().abspath(), 'client.exe')
+	client_path = os.path.join (bld.path.get_bld().abspath(), 'client.exe')
 
-	bld.run_tester ("per-user", "--multiuser %s" % server_path)
+	bld.run_tester ("per-user", "--multiuser %s %s" % (server_path, client_path))
+
 

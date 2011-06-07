@@ -12,16 +12,17 @@ void __RPC_USER MIDL_user_free (void *user) {
 }
 
 int main () {
-	RpcAsyncCall   async_call;
-	RPC_STATUS     status;
-	DWORD          wait_result;
-	unsigned char *message;
-	int            counter = 0;
-	int            cancelled;
+	char *message = NULL;
 
-	rpc_client_bind (&peruser_interface_handle, DEFAULT_ENDPOINT, RPC_PER_USER);
+	rpc_client_bind (&per_user_rpc_interface_handle, DEFAULT_ENDPOINT, RPC_PER_USER);
 
-	rpc_client_unbind (&peruser_interface_handle);
+	tell_me_a_secret (&message);
+
+	printf ("client: got secret '%s'\n", message);
+
+	MIDL_user_free (message);
+
+	rpc_client_unbind (&per_user_rpc_interface_handle);
 
 	printf ("client: success\n");
 }

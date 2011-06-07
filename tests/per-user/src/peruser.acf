@@ -1,5 +1,5 @@
 [
-  implicit_handle (handle_t peruser_interface_handle)
+  implicit_handle (handle_t per_user_rpc_interface_handle)
 ]
-interface peruser {
+interface PerUserRPC {
 }

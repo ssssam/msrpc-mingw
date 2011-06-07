@@ -67,6 +67,11 @@ static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers) {
 		               active_endpoint_name);
 	else
 
+	if (exception->ExceptionCode == ERROR_ACCESS_DENIED)
+		rpc_log_error ("Access denied to RPC endpoint '%s'\n",
+		               active_endpoint_name);
+	else
+
 	/* Filter for RPC errors - not perfect, but avoids too many false
 	 * positives. See winerror.h for the actual codes. */
 	if (exception->ExceptionCode & 0x1700)
@@ -119,7 +124,7 @@ static int get_per_user_endpoint_name (const char  *prefix,
 	}
 
 	/* Prepend the login session identifier to the endpoint name */
-	snprintf (output_buffer + 1,
+	snprintf (output_buffer,
 	          RPC_ENDPOINT_MAX_LENGTH,
 	          "%x.%lx@%s",
 	          token_data.AuthenticationId.LowPart,
@@ -179,8 +184,8 @@ int rpc_server_start (RPC_IF_HANDLE  interface_spec,
 
 	if (flags & RPC_PER_USER)
 		status = RpcServerRegisterIf2 (interface_spec,
-		                                NULL, NULL, 0, 0, -1,
-		                                per_user_security_cb);
+		                               NULL, NULL, 0, 0, -1,
+		                               per_user_security_cb);
 	else
 		RpcServerRegisterIf2 (interface_spec, NULL, NULL, 0, 0, -1, NULL);
 
@@ -232,10 +237,20 @@ void rpc_server_stop () {
 int rpc_client_bind (handle_t   *interface_handle,
                      const char *endpoint_name,
                      RpcFlags    flags) {
-	RPC_STATUS status;
+	RPC_STATUS     status;
 	unsigned char *string_binding = NULL;
+	char           per_user_endpoint_name[RPC_ENDPOINT_MAX_LENGTH + 1];
 
 	super_exception_handler = SetUnhandledExceptionFilter (exception_handler);
+
+	if (flags & RPC_PER_USER) {
+		status = get_per_user_endpoint_name (endpoint_name, per_user_endpoint_name);
+
+		if (status != 0)
+			return status;
+
+		endpoint_name = per_user_endpoint_name;
+	}
 
 	status = RpcStringBindingCompose (NULL,
 	                                  "ncalrpc" /* local RPC only */,

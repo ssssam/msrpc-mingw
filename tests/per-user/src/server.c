@@ -61,13 +61,16 @@ char *get_process_owner () {
 }
 
 void tell_me_a_secret (char **message) {
-	*message = "When I was a child I ate balloons";
+	const char *secret = "When I was a child I ate balloons";
+
+	*message = MIDL_user_allocate (strlen (secret) + 1);
+	strcpy (*message, secret);
 }
 
 int main (int argc, char **argv) {
 	char *user_name;
 
-	rpc_server_start (&PerUserRPC_v1_0_s_ifspec, DEFAULT_ENDPOINT, RPC_PER_USER);
+	rpc_server_start (PerUserRPC_v1_0_s_ifspec, DEFAULT_ENDPOINT, RPC_PER_USER);
 
 	user_name = get_process_owner ();
 
@@ -76,7 +79,7 @@ int main (int argc, char **argv) {
 
 	LocalFree (user_name);
 
-	Sleep (10 * 1000);
+	Sleep (60 * 1000);
 
 	rpc_server_stop ();
 

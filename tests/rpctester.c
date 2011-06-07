@@ -77,8 +77,7 @@ int parse_options (int      argc,
 	if (options->test_mode == TEST_NONE)
 		options->test_mode = TEST_STANDARD;
 
-	if (options->server == NULL
-	     || (options->test_mode != TEST_MULTIUSER && options->client == NULL))
+	if (options->server == NULL || options->client == NULL)
 		return 0;
 
 	return 1;
@@ -408,14 +407,23 @@ void test_multiuser (Options options) {
 	HANDLE second_user_token;
 
 	get_test_user_token (&second_user_token);
-
 	h_process[0] = exec (options.server, second_user_token, &h_pipe[0]);
-
+	h_process[1] = exec (options.server, NULL, &h_pipe[1]);
 	CloseHandle (second_user_token);
 
-	//dump (h_pipe[0]);
+	assert_line (h_pipe[0], "server: listening");
+	assert_line (h_pipe[1], "server: listening");
 
-	h_process[1] = exec (options.server, NULL, &h_pipe[1]);
+	h_process[2] = exec (options.client, NULL, &h_pipe[2]);
+
+	exit_code = wait_process (2, "client");
+
+	dump (h_pipe[2]);
+
+	if (exit_code != 0)
+		rpc_log_error ("tester: Client enountered an error\n");
+
+	//dump (h_pipe[0]);
 
 	//dump (h_pipe[1]);
 }

@@ -4,7 +4,7 @@
 ]
 interface PerUserRPC
 {
-    const char *DEFAULT_ENDPOINT = "this-endpoint-name-is-super-long";
+    const char *DEFAULT_ENDPOINT = "this-interface-name-is-super-long";
 
     void tell_me_a_secret ([out, string] char **message);
 }
