@@ -314,7 +314,7 @@ int rpc_async_call_cancel (RpcAsyncCall *call) {
 
 /* Return value from server side */
 void rpc_async_call_return (RpcAsyncCall *call,
-                            void           *return_value) {
+                            void         *return_value) {
 	RPC_STATUS status;
 
 	status = RpcAsyncCompleteCall (call, return_value);
@@ -326,7 +326,7 @@ void rpc_async_call_return (RpcAsyncCall *call,
 }
 
 void rpc_async_call_abort (RpcAsyncCall *call,
-                           int             reason) {
+                           int           reason) {
 	RPC_STATUS status;
 
 	status = RpcAsyncAbortCall (call, reason);
