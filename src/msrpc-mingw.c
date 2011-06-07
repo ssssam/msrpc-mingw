@@ -96,6 +96,10 @@ static int get_per_user_endpoint_name (const char  *prefix,
 		return -1;
 	}
 
+	/* Get current process logon identifier. Another way to do this is
+	 * to use GetClientInfo().
+	 */
+
 	success = OpenProcessToken (GetCurrentProcess(), TOKEN_QUERY, &process_access_token);
 
 	if (! success) {
@@ -121,6 +125,8 @@ static int get_per_user_endpoint_name (const char  *prefix,
 	          token_data.AuthenticationId.LowPart,
 	          token_data.AuthenticationId.HighPart,
 	          prefix);
+
+	CloseHandle (process_access_token);
 
 	return 0;
 }
