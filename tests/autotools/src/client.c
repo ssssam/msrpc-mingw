@@ -20,7 +20,7 @@ void __RPC_USER MIDL_user_free (void *data) {
 
 int main(int   argc,
          char *argv[]) {
-	rpc_client_bind (&hello_IfHandle, "hello-world");
+	rpc_client_bind (&hello_IfHandle, "hello-world", RPC_SYSTEM_WIDE);
 
 	say_hello ("Client");
 

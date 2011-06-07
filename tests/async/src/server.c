@@ -52,7 +52,7 @@ void black_hole (RpcAsyncCall *async_call) {
 }
 
 int main () {
-	rpc_server_start (AsyncRPC_v1_0_s_ifspec, DEFAULT_ENDPOINT, RPC_PER_SYSTEM);
+	rpc_server_start (AsyncRPC_v1_0_s_ifspec, DEFAULT_ENDPOINT, RPC_SYSTEM_WIDE);
 
 	printf ("server: listening (as %s)\n", DEFAULT_ENDPOINT);
 	fflush (stdout);

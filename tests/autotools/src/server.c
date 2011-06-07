@@ -23,7 +23,7 @@ void say_hello (const unsigned char *name) {
 
 int main(int   argc,
          char *argv[]) {
-	rpc_server_start (hello_v1_0_s_ifspec, "hello-world");
+	rpc_server_start (hello_v1_0_s_ifspec, "hello-world", RP_SYSTEM_WIDE);
 
 	Sleep (60 * 1000);
 

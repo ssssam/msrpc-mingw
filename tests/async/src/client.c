@@ -21,7 +21,7 @@ int main () {
 	int            counter = 0;
 	int            cancelled;
 
-	rpc_client_bind (&async_rpc_interface_handle, DEFAULT_ENDPOINT);
+	rpc_client_bind (&async_rpc_interface_handle, DEFAULT_ENDPOINT, RPC_SYSTEM_WIDE);
 
 	printf ("Client has binding to %s\n", DEFAULT_ENDPOINT);
 

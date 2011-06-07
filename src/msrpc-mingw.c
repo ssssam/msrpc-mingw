@@ -64,14 +64,13 @@ static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers) {
 }
 
 
-
-/* make_endpoint_name_unique:
- *
- * Append the logon session identifier, a locally unique ID, to the
- * endpoint name so that it is unique per-session.
+/* Per-user utilities
+ * ------------------
  */
-static int make_endpoint_name_unique (const char  *prefix,
-                                      char        *output_buffer) {
+
+
+static int get_per_user_endpoint_name (const char  *prefix,
+                                       char        *output_buffer) {
 	HANDLE           process_access_token;
 	TOKEN_STATISTICS token_data;
 
@@ -103,6 +102,7 @@ static int make_endpoint_name_unique (const char  *prefix,
 		return GetLastError ();
 	}
 
+	/* Prepend the login session identifier to the endpoint name */
 	snprintf (output_buffer + 1,
 	          RPC_ENDPOINT_MAX_LENGTH,
 	          "%x.%lx@%s",
@@ -111,6 +111,12 @@ static int make_endpoint_name_unique (const char  *prefix,
 	          prefix);
 
 	return 0;
+}
+
+RPC_STATUS per_user_security_cb (RPC_IF_HANDLE  interface_spec,
+                                 void          *context) {
+	/* None shall pass! */
+	return RPC_S_ACCESS_DENIED;
 }
 
 /* Init and shutdown
@@ -123,17 +129,17 @@ static RPC_IF_HANDLE server_interface = NULL;
 
 int rpc_server_start (RPC_IF_HANDLE  interface_spec,
                       const char    *endpoint_name,
-                      RpcServerFlags flags) {
-	char        unique_endpoint_name[RPC_ENDPOINT_MAX_LENGTH + 1];
+                      RpcFlags       flags) {
+	char        per_user_endpoint_name[RPC_ENDPOINT_MAX_LENGTH + 1];
 	RPC_STATUS  status;
 
 	if (flags & RPC_PER_USER) {
-		status = make_endpoint_name_unique (endpoint_name, unique_endpoint_name);
+		status = get_per_user_endpoint_name (endpoint_name, per_user_endpoint_name);
 
 		if (status != 0)
 			return status;
 
-		endpoint_name = unique_endpoint_name;
+		endpoint_name = per_user_endpoint_name;
 	}
 
 	/* No access control is used on the endpoint itself, even if the
@@ -155,7 +161,12 @@ int rpc_server_start (RPC_IF_HANDLE  interface_spec,
 		return status;
 	}
 
-	status = RpcServerRegisterIf (interface_spec, NULL, NULL);
+	if (flags & RPC_PER_USER)
+		status = RpcServerRegisterIf2 (interface_spec,
+		                                NULL, NULL, 0, 0, -1,
+		                                per_user_security_cb);
+	else
+		RpcServerRegisterIf2 (interface_spec, NULL, NULL, 0, 0, -1, NULL);
 
 	if (status) {
 		rpc_log_error_from_status (status);
@@ -196,7 +207,8 @@ void rpc_server_stop () {
 
 
 int rpc_client_bind (handle_t   *interface_handle,
-                     const char *endpoint_name) {
+                     const char *endpoint_name,
+                     RpcFlags    flags) {
 	RPC_STATUS status;
 	unsigned char *string_binding = NULL;
 

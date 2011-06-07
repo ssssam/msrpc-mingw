@@ -14,10 +14,10 @@ def build (bld):
 		'includes': [local_msrpc_include_path, src_dir.get_bld()]
 	}
 
-	#bld (features = 'c cprogram msrpc_client',
-	#     source = 'src/client.c',
-	#     target = 'client',
-	#     **kws)
+	bld (features = 'c cprogram msrpc_client',
+	     source = 'src/client.c',
+	     target = 'client',
+	     **kws)
 
 	bld (features = 'c cprogram msrpc_server',
 	     source = 'src/server.c',

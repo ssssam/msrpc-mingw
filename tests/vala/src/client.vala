@@ -3,7 +3,9 @@ using ValaInterface;
 
 public class ValaClient: Object {
 	public ValaClient () {
-		Rpc.client_bind (ref ValaInterface.binding_handle, "vala-test-interface");
+		Rpc.client_bind (ref ValaInterface.binding_handle,
+		                 "vala-test-interface",
+		                 Rpc.Flags.SYSTEM_WIDE);
 	}
 
 	~ValaClient () {

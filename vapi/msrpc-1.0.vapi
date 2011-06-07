@@ -28,14 +28,14 @@ namespace Rpc {
 	public struct InterfaceHandle {
 	}
 
-	[CCode (cname = "RpcServerFlags")]
-	public enum ServerFlags {
-		PER_SYSTEM,
+	[CCode (cprefix = "RPC_")]
+	public enum Flags {
+		SYSTEM_WIDE,
 		PER_USER
 	}
 
 	[CCode (cname = "rpc_server_start")]
-	public int server_start (InterfaceHandle interface_spec, string endpoint_name, ServerFlags flags);
+	public int server_start (InterfaceHandle interface_spec, string endpoint_name, Flags flags);
 
 	[CCode (cname = "rpc_server_stop")]
 	public void server_stop ();
@@ -46,7 +46,7 @@ namespace Rpc {
 	}
 
 	[CCode (cname = "rpc_client_bind")]
-	public int client_bind (ref BindingHandle binding_handle, string endpoint_name);
+	public int client_bind (ref BindingHandle binding_handle, string endpoint_name, Flags flags);
 
 	[CCode (cname = "rpc_client_unbind")]
 	public void client_unbind (ref BindingHandle binding_handle);
