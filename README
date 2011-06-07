@@ -55,6 +55,25 @@ You also must have a copy of MIDL.EXE from the Windows SDK. This is available he
 You need only install the 'Win32 developer tools' component.
 
 
+* Documentation:
+
+This can be found in the header files in src/. Look at the tests for more
+examples of how to use this code.
+
+Watch out for the following little traps that the API has in store:
+
+  - Any output parameters which are pointers must be initialised to NULL
+    before calling an RPC function, otherwise you will get a segfault.
+
+  - When returning data, make sure it has been freshly allocated with
+    in the server and that it gets freed in the client.
+
+  - Make sure your MIDL_user_allocate() and MIDL_user_free() functions
+    match up with the allocation API that you actually use for data that
+    is sent or received over RPC. If you use msrpc-glib2, these
+    functions are already defined to use g_malloc() and g_free().
+
+
 * Testing:
 
 To run the automated tests, make sure the build is up to date by running
