@@ -10,6 +10,13 @@
 
 #define RPC_ENDPOINT_MAX_LENGTH  52
 
+/* Stored so we can give a more helpful message when we get
+ * RPC_S_SERVER_UNAVAILABLE exceptions.
+ */
+static char *active_endpoint_name = NULL;
+
+static RPC_IF_HANDLE server_interface = NULL;
+
 /* Error handling
  * --------------
  *
@@ -54,6 +61,11 @@ void rpc_log_error_from_status (DWORD status) {
 
 static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers) {
 	LPEXCEPTION_RECORD exception = exception_pointers->ExceptionRecord;
+
+	if (exception->ExceptionCode == RPC_S_SERVER_UNAVAILABLE)
+		rpc_log_error ("RPC server is unavailable on endpoint '%s'\n",
+		               active_endpoint_name);
+	else
 
 	/* Filter for RPC errors - not perfect, but avoids too many false
 	 * positives. See winerror.h for the actual codes. */
@@ -125,8 +137,6 @@ RPC_STATUS per_user_security_cb (RPC_IF_HANDLE  interface_spec,
  * Any errors will result in the rpc_log() function being called.
  */
 
-static RPC_IF_HANDLE server_interface = NULL;
-
 int rpc_server_start (RPC_IF_HANDLE  interface_spec,
                       const char    *endpoint_name,
                       RpcFlags       flags) {
@@ -180,6 +190,8 @@ int rpc_server_start (RPC_IF_HANDLE  interface_spec,
 		return status;
 	}
 
+	active_endpoint_name = strdup (endpoint_name);
+
 	return 0;
 }
 
@@ -188,6 +200,11 @@ void rpc_server_stop () {
 
 	if (server_interface == NULL)
 		return;
+
+	if (active_endpoint_name != NULL) {
+		free (active_endpoint_name);
+		active_endpoint_name = NULL;
+	}
 
 	status = RpcMgmtStopServerListening (NULL);
 
@@ -236,11 +253,18 @@ int rpc_client_bind (handle_t   *interface_handle,
 
 	RpcStringFree (&string_binding);
 
+	active_endpoint_name = strdup (endpoint_name);
+
 	return 0;
 }
 
 void rpc_client_unbind (handle_t *interface_handle) {
 	RpcBindingFree (interface_handle);
+
+	if (active_endpoint_name != NULL) {
+		free (active_endpoint_name);
+		active_endpoint_name = NULL;
+	}
 }
 
 
