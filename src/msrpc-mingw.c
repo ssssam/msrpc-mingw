@@ -85,7 +85,6 @@ static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers) {
  * ------------------
  */
 
-
 static int get_per_user_endpoint_name (const char  *prefix,
                                        char        *output_buffer) {
 	HANDLE           process_access_token;
@@ -141,6 +140,7 @@ RPC_STATUS per_user_security_cb (RPC_IF_HANDLE  interface_spec,
 	/* None shall pass! */
 	return RPC_S_ACCESS_DENIED;
 }
+
 
 /* Init and shutdown
  * -----------------
