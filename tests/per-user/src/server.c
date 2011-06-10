@@ -63,23 +63,35 @@ char *get_process_owner () {
 void tell_me_a_secret (char **message) {
 	const char *secret = "When I was a child I ate balloons";
 
+	printf ("RPC function!\n");
+
 	*message = MIDL_user_allocate (strlen (secret) + 1);
 	strcpy (*message, secret);
+
+	printf ("Done, returing %s\n", *message);
+
+	return;
 }
 
 int main (int argc, char **argv) {
-	char *user_name;
+	BOOL  success;
+	char  user_name[256];
+	DWORD length;
 
 	rpc_server_start (PerUserRPC_v1_0_s_ifspec, DEFAULT_ENDPOINT, RPC_PER_USER);
 
-	user_name = get_process_owner ();
+	length = 255;
+	success = GetUserName (user_name, &length);
+
+	if (! success)
+		rpc_log_error_from_status (GetLastError ());
 
 	printf ("server: listening (as user '%s')\n", user_name);
 	fflush (stdout);
 
 	LocalFree (user_name);
 
-	Sleep (60 * 1000);
+	Sleep (10000 * 1000);
 
 	rpc_server_stop ();
 

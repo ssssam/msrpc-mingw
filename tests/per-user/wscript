@@ -19,6 +19,11 @@ def build (bld):
 	     target = 'client',
 	     **kws)
 
+	bld (features = 'c cprogram msrpc_client',
+	     source = 'src/rogue-client.c',
+	     target = 'rogue-client',
+	     **kws)
+
 	bld (features = 'c cprogram msrpc_server',
 	     source = 'src/server.c',
 	     target = 'server',

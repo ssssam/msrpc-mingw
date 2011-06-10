@@ -218,7 +218,9 @@ int wait_process (int n, const char *process_name) {
 	result = WaitForSingleObject (handle, 5000);
 
 	if (result == WAIT_TIMEOUT) {
-		rpc_log_error ("tester: Waiting for %s timed out\n", process_name);
+		// Not an error, so we can see server output
+		/*rpc_log_error ("tester: Waiting for %s timed out\n", process_name);*/
+		return 0;
 	}
 
 	if (result != WAIT_OBJECT_0) {
@@ -287,9 +289,9 @@ void assert_last_line (HANDLE      h_stream,
 }
 
 void dump (HANDLE h_stream) {
-	char buffer[256];
+	char buffer[4096];
 
-	read_to_buffer (h_stream, (char **)&buffer, 256);
+	read_to_buffer (h_stream, (char **)&buffer, 4095);
 	printf ("%s", buffer);
 }
 
@@ -395,8 +397,11 @@ void test_standard (Options options) {
 
 	exit_code = wait_process (1, "client");
 
-	if (exit_code)
+	if (exit_code) {
+		printf ("\nServer output:\n"); dump (h_pipe[0]);
+		printf ("\nClient output:\n"); dump (h_pipe[1]);
 		rpc_log_error ("Client exited with an error");
+	}
 
 	assert_last_line (h_pipe[1], "client: success");
 }
@@ -412,13 +417,16 @@ void test_multiuser (Options options) {
 	CloseHandle (second_user_token);
 
 	assert_line (h_pipe[0], "server: listening");
-	assert_line (h_pipe[1], "server: listening");
+//	assert_line (h_pipe[1], "server: listening");
 
 	h_process[2] = exec (options.client, NULL, &h_pipe[2]);
 
 	exit_code = wait_process (2, "client");
 
 	dump (h_pipe[2]);
+
+	printf ("\nServer output: \n");
+	dump (h_pipe[1]);
 
 	if (exit_code != 0)
 		rpc_log_error ("tester: Client enountered an error\n");

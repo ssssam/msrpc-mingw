@@ -135,10 +135,108 @@ static int get_per_user_endpoint_name (const char  *prefix,
 	return 0;
 }
 
-RPC_STATUS per_user_security_cb (RPC_IF_HANDLE  interface_spec,
-                                 void          *context) {
-	/* None shall pass! */
-	return RPC_S_ACCESS_DENIED;
+static TOKEN_USER *get_process_user () {
+	BOOL        success;
+	DWORD       length = 0;
+	HANDLE      h_token;
+	TOKEN_USER *result;
+
+	success = OpenProcessToken (GetCurrentProcess(), TOKEN_QUERY, &h_token);
+
+	if (! success) {
+		rpc_log_error_from_status (GetLastError ());
+		return NULL;
+	}
+
+	GetTokenInformation (h_token, TokenUser, NULL, 0, &length);
+
+	if (length <= 0) {
+		if (! success)
+			rpc_log_error_from_status (GetLastError ());
+		else
+			rpc_log_error ("GetTokenInformation() returned zero length information\n");
+		return NULL;
+	}
+
+	result = HeapAlloc (GetProcessHeap(),
+	                    HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS,
+	                    length);
+
+	success = GetTokenInformation (h_token, TokenUser, result, length, &length);
+
+	if (! success) {
+		rpc_log_error_from_status (GetLastError ());
+		return NULL;
+	}
+
+	CloseHandle (h_token);
+
+	return result;
+}
+
+static __stdcall RPC_STATUS per_user_security_cb (RPC_IF_HANDLE  interface_spec,
+                                                  void          *context) {
+	RPC_STATUS        status;
+	BOOL              authorized;
+	HANDLE            h_client = context;
+	RPC_AUTHZ_HANDLE  privs = NULL;
+	unsigned long     authentication_level,
+	                  authentication_service,
+	                  authorization_service;
+	TOKEN_USER       *client_user,
+	                 *server_user;
+
+	status = RpcBindingInqAuthClient (h_client,
+	                                  &privs,
+	                                  NULL,
+	                                  &authentication_level,
+	                                  &authentication_service,
+	                                  &authorization_service);
+
+	if (status) {
+		rpc_log_error_from_status (status);
+		return RPC_S_ACCESS_DENIED;
+	}
+
+	if (authentication_service != RPC_C_AUTHN_WINNT)
+		/* Unknown authentication method */
+		return RPC_S_ACCESS_DENIED;
+
+	if (authentication_level < RPC_C_AUTHN_LEVEL_PKT_PRIVACY)
+		/* Not secure enough - and it's impossible to get a lower level for
+		 * ncalrpc anyway */
+		 return RPC_S_ACCESS_DENIED;
+
+	status = RpcImpersonateClient (h_client);
+
+	if (status) {
+		rpc_log_error_from_status (status);
+		return RPC_S_ACCESS_DENIED;
+	}
+
+	client_user = get_process_user ();
+
+	status = RpcRevertToSelf ();
+
+	if (status) {
+		rpc_log_error_from_status (status);
+		return RPC_S_ACCESS_DENIED;
+	}
+
+	server_user = get_process_user ();
+
+	if (client_user == NULL || server_user == NULL)
+		return RPC_S_ACCESS_DENIED;
+
+	authorized = EqualSid (client_user->User.Sid, server_user->User.Sid);
+
+	HeapFree (GetProcessHeap (), 0, client_user);
+	HeapFree (GetProcessHeap (), 0, server_user);
+
+	if (authorized)
+		return RPC_S_OK;
+	else
+		return RPC_S_ACCESS_DENIED;
 }
 
 
@@ -148,11 +246,26 @@ RPC_STATUS per_user_security_cb (RPC_IF_HANDLE  interface_spec,
  * Any errors will result in the rpc_log() function being called.
  */
 
+/* Called automatically, don't need this unless for some reason you are
+ * binding / listening manually.
+ */
+void rpc_init () {
+	static int initialized = FALSE;
+
+	if (! initialized) {
+		super_exception_handler = SetUnhandledExceptionFilter (exception_handler);
+
+		initialized = TRUE;
+	}
+}
+
 int rpc_server_start (RPC_IF_HANDLE  interface_spec,
                       const char    *endpoint_name,
                       RpcFlags       flags) {
-	char        per_user_endpoint_name[RPC_ENDPOINT_MAX_LENGTH + 1];
-	RPC_STATUS  status;
+	RPC_STATUS status;
+	char       per_user_endpoint_name[RPC_ENDPOINT_MAX_LENGTH + 1];
+
+	rpc_init ();
 
 	if (flags & RPC_PER_USER) {
 		status = get_per_user_endpoint_name (endpoint_name, per_user_endpoint_name);
@@ -182,12 +295,24 @@ int rpc_server_start (RPC_IF_HANDLE  interface_spec,
 		return status;
 	}
 
-	if (flags & RPC_PER_USER)
+	if (flags & RPC_PER_USER) {
+		status = RpcServerRegisterAuthInfo (NULL, RPC_C_AUTHN_WINNT, NULL, NULL);
+
+		if (status) {
+			rpc_log_error_from_status (status);
+			return status;
+		}
+
 		status = RpcServerRegisterIf2 (interface_spec,
-		                               NULL, NULL, 0, 0, -1,
-		                               per_user_security_cb);
-	else
-		RpcServerRegisterIf2 (interface_spec, NULL, NULL, 0, 0, -1, NULL);
+		                               NULL,
+		                               NULL,
+		                               /* RPC_IF_ALLOW_SECURE_ONLY - this is on
+		                                * by default in XP SP2 and above anyway */
+		                               0x0008,
+		                               0, -1,
+		                               (RPC_IF_CALLBACK_FN *)per_user_security_cb);
+	} else
+		status = RpcServerRegisterIf2 (interface_spec, NULL, NULL, 0, 0, -1, NULL);
 
 	if (status) {
 		rpc_log_error_from_status (status);
@@ -237,11 +362,12 @@ void rpc_server_stop () {
 int rpc_client_bind (handle_t   *interface_handle,
                      const char *endpoint_name,
                      RpcFlags    flags) {
-	RPC_STATUS     status;
-	unsigned char *string_binding = NULL;
-	char           per_user_endpoint_name[RPC_ENDPOINT_MAX_LENGTH + 1];
+	RPC_STATUS       status;
+	char             per_user_endpoint_name[RPC_ENDPOINT_MAX_LENGTH + 1];
+	unsigned char   *string_binding = NULL;
+	RPC_SECURITY_QOS qos;
 
-	super_exception_handler = SetUnhandledExceptionFilter (exception_handler);
+	rpc_init ();
 
 	if (flags & RPC_PER_USER) {
 		status = get_per_user_endpoint_name (endpoint_name, per_user_endpoint_name);
@@ -273,6 +399,36 @@ int rpc_client_bind (handle_t   *interface_handle,
 	}
 
 	RpcStringFree (&string_binding);
+
+	if (flags & RPC_PER_USER) {
+		/* FIXME:
+		 *  "The ncalrpc protocol sequence supports only RPC_C_AUTHN_WINNT,
+		 *   but does support mutual authentication; supply an SPN and
+		 *   request mutual authentication through the SecurityQOS parameter
+		 *   to achieve this."
+		 *
+		 *   -- http://msdn.microsoft.com/en-us/library/aa375608(v=vs.85).aspx
+		 */
+
+		qos.Version = 1;
+		qos.Capabilities = RPC_C_QOS_CAPABILITIES_DEFAULT; /* MUTUAL_AUTH*/
+		qos.IdentityTracking = RPC_C_QOS_IDENTITY_STATIC;
+		qos.ImpersonationType = RPC_C_IMP_LEVEL_IMPERSONATE;
+
+		/* Auth seems to be set for client even if we don't call this */
+		status = RpcBindingSetAuthInfoEx (*interface_handle,
+		                                  NULL,
+		                                  RPC_C_AUTHN_LEVEL_PKT_PRIVACY,
+		                                  RPC_C_AUTHN_WINNT,
+		                                  NULL,
+		                                  0,
+		                                  &qos);
+
+		if (status) {
+			rpc_log_error_from_status (status);
+			return status;
+		}
+	}
 
 	active_endpoint_name = strdup (endpoint_name);
 

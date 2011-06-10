@@ -21,6 +21,8 @@ typedef enum {
 	RPC_PER_USER = 1
 } RpcFlags;
 
+void rpc_init                  ();
+
 int  rpc_server_start          (RPC_IF_HANDLE interface_spec, const char *endpoint_name, RpcFlags flags);
 void rpc_server_stop           ();
 
