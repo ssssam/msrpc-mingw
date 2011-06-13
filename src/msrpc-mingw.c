@@ -1,4 +1,36 @@
-/* FIXME: add copyright */
+/*
+ * Copyright (c) 2011, JANET(UK)
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of JANET(UK) nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * Author: Sam Thursfield <samthursfield@codethink.co.uk>
+ */
 
 #include <windows.h>
 #include <rpc.h>
@@ -17,11 +49,8 @@ static char *active_endpoint_name = NULL;
 
 static RPC_IF_HANDLE server_interface = NULL;
 
-/* Error handling
- * --------------
- *
- * By default, errors are printed to the console and then process exits. You
- * can set a custom handler using rpc_set_log_function().
+/***********************************************************************
+ * Logging
  */
 
 static RpcLogFunction log_function = rpc_default_log_function;
@@ -97,8 +126,8 @@ static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers) {
 }
 
 
-/* Per-user utilities
- * ------------------
+/***********************************************************************
+ * Per-user utilities
  */
 
 static int get_per_user_endpoint_name (const char  *prefix,
@@ -258,10 +287,9 @@ static __stdcall RPC_STATUS per_user_security_cb (RPC_IF_HANDLE  interface_spec,
 }
 
 
-/* Init and shutdown
- * -----------------
- *
- * Any errors will result in the rpc_log() function being called.
+
+/***********************************************************************
+ * Init and shutdown
  */
 
 /* Called automatically, don't need this unless for some reason you are
@@ -377,7 +405,7 @@ void rpc_server_stop () {
 }
 
 
-int rpc_client_bind (handle_t   *interface_handle,
+int rpc_client_bind (handle_t   *binding_handle,
                      const char *endpoint_name,
                      RpcFlags    flags) {
 	RPC_STATUS       status;
@@ -409,7 +437,7 @@ int rpc_client_bind (handle_t   *interface_handle,
 	}
 
 	status = RpcBindingFromStringBinding (string_binding,
-	                                      interface_handle);
+	                                      binding_handle);
 
 	if (status) {
 		rpc_log_error_from_status (status);
@@ -419,13 +447,14 @@ int rpc_client_bind (handle_t   *interface_handle,
 	RpcStringFree (&string_binding);
 
 	if (flags & RPC_PER_USER) {
-		/* FIXME:
-		 *  "The ncalrpc protocol sequence supports only RPC_C_AUTHN_WINNT,
+		/* "The ncalrpc protocol sequence supports only RPC_C_AUTHN_WINNT,
 		 *   but does support mutual authentication; supply an SPN and
 		 *   request mutual authentication through the SecurityQOS parameter
 		 *   to achieve this."
 		 *
 		 *   -- http://msdn.microsoft.com/en-us/library/aa375608(v=vs.85).aspx
+		 *
+		 * Perhaps we can support this?
 		 */
 
 		qos.Version = 1;
@@ -434,7 +463,7 @@ int rpc_client_bind (handle_t   *interface_handle,
 		qos.ImpersonationType = RPC_C_IMP_LEVEL_IMPERSONATE;
 
 		/* Auth seems to be set for client even if we don't call this */
-		status = RpcBindingSetAuthInfoEx (*interface_handle,
+		status = RpcBindingSetAuthInfoEx (*binding_handle,
 		                                  NULL,
 		                                  RPC_C_AUTHN_LEVEL_PKT_PRIVACY,
 		                                  RPC_C_AUTHN_WINNT,
@@ -453,8 +482,8 @@ int rpc_client_bind (handle_t   *interface_handle,
 	return 0;
 }
 
-void rpc_client_unbind (handle_t *interface_handle) {
-	RpcBindingFree (interface_handle);
+void rpc_client_unbind (handle_t *binding_handle) {
+	RpcBindingFree (binding_handle);
 
 	if (active_endpoint_name != NULL) {
 		free (active_endpoint_name);
@@ -467,10 +496,8 @@ const char *rpc_get_active_endpoint_name () {
 }
 
 
-/* Asynchronous calls
- * ------------------
- *
- * Any errors will result in the rpc_log function being called.
+/***********************************************************************
+ * Asynchronous calls
  */
 
 void rpc_async_call_init (RpcAsyncCall *call) {
