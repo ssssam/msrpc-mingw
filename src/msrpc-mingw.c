@@ -566,12 +566,10 @@ void rpc_async_call_abort (RpcAsyncCall *call,
 
 	status = RpcAsyncAbortCall (call, reason);
 
-	printf ("async abort call %i\n", status);
 	if (status != RPC_S_OK) {
 		rpc_log_error_from_status (status);
 		return;
 	}
-	printf ("done\n");
 }
 
 int rpc_async_call_is_cancelled (RpcAsyncCall *call) {
