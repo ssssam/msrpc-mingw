@@ -21,26 +21,23 @@ static RPC_IF_HANDLE server_interface = NULL;
  * --------------
  *
  * By default, errors are printed to the console and then process exits. You
- * can set a custom handler using rpc_set_log_function(). If using GLib,
- * note that you may do the following:
- *
- *   rpc_set_log_function (g_logv);
- *
+ * can set a custom handler using rpc_set_log_function().
  */
-
-#define RPC_LOG_LEVEL_ERROR   (1<<2)
 
 static RpcLogFunction log_function = rpc_default_log_function;
 
 static LPTOP_LEVEL_EXCEPTION_FILTER super_exception_handler;
 
-void rpc_default_log_function (const char *domain,
-                               int         errorlevel,
-                               const char *format,
-                               va_list     args) {
+void rpc_default_log_function (unsigned int  status_code,
+                               const char   *format,
+                               va_list       args) {
 	vprintf (format, args);
-	exit (1);
+	exit (status_code);
 }
+
+void rpc_log_error             (const char *format, ...);
+void rpc_log_error_with_status (DWORD status, const char *format, ...);
+void rpc_log_error_from_status (DWORD status);
 
 void rpc_set_log_function (RpcLogFunction _log_function) {
 	log_function = _log_function;
@@ -49,14 +46,33 @@ void rpc_set_log_function (RpcLogFunction _log_function) {
 void rpc_log_error (const char *format, ...) {
 	va_list args;
 	va_start (args, format);
-	log_function ("Microsoft RPC", RPC_LOG_LEVEL_ERROR, format, args);
+	log_function (1, format, args);
 	va_end (args);
 }
 
 void rpc_log_error_from_status (DWORD status) {
 	char buffer[256];
 	FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, NULL, status, 0, (LPSTR)&buffer, 255, NULL);
-	rpc_log_error (buffer);
+	log_function (status, buffer, NULL);
+}
+
+void rpc_log_error_with_status (DWORD       status,
+                                const char *format, ...) {
+	char buffer1[256], *buffer2;
+
+	FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, NULL, status, 0, (LPSTR)&buffer1, 255, NULL);
+
+	buffer2 = malloc (strlen (format) + strlen (buffer1) + 3);
+	strcpy (buffer2, format);
+	strcat (buffer2, ": ");
+	strcat (buffer2, buffer1);
+
+	va_list args;
+	va_start (args, format);
+	log_function (status, buffer2, args);
+	va_end (args);
+
+	free (buffer2);
 }
 
 static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers) {
@@ -229,6 +245,8 @@ static __stdcall RPC_STATUS per_user_security_cb (RPC_IF_HANDLE  interface_spec,
 		return RPC_S_ACCESS_DENIED;
 
 	authorized = EqualSid (client_user->User.Sid, server_user->User.Sid);
+
+	printf ("sid's match? %i\n", authorized);
 
 	HeapFree (GetProcessHeap (), 0, client_user);
 	HeapFree (GetProcessHeap (), 0, server_user);
@@ -442,6 +460,10 @@ void rpc_client_unbind (handle_t *interface_handle) {
 		free (active_endpoint_name);
 		active_endpoint_name = NULL;
 	}
+}
+
+const char *rpc_get_active_endpoint_name () {
+	return active_endpoint_name;
 }
 
 

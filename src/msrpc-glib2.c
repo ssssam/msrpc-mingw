@@ -24,6 +24,12 @@ void __RPC_USER MIDL_user_free (void *data) {
  *
  */
 
+static void g_log_function (unsigned int  status,
+                            const char   *format,
+                            va_list       args) {
+	g_logv ("Microsoft RPC", G_LOG_LEVEL_ERROR, format, args);
+}
+
 void rpc_glib2_init () {
-	rpc_set_log_function (g_logv);
+	rpc_set_log_function (g_log_function);
 }

@@ -5,15 +5,15 @@
 
 #include <stdarg.h>
 
-typedef void (*RpcLogFunction) (const char *domain,
-                                int         errorlevel,
-                                const char *format,
-                                va_list     args);
+typedef void (*RpcLogFunction) (unsigned int  status_code,
+                                const char   *format,
+                                va_list       args);
 
-void rpc_default_log_function  (const char *domain, int errorlevel, const char *format, va_list args);
+void rpc_default_log_function  (unsigned int status_code, const char *format, va_list args);
 void rpc_set_log_function      (RpcLogFunction _log_function);
 
 void rpc_log_error             (const char *format, ...);
+void rpc_log_error_with_status (DWORD status, const char *format, ...);
 void rpc_log_error_from_status (DWORD status);
 
 typedef enum {
@@ -29,6 +29,7 @@ void rpc_server_stop           ();
 int  rpc_client_bind           (handle_t *interface_handle, const char *endpoint_name, RpcFlags flags);
 void rpc_client_unbind         (handle_t *interface_handle);
 
+const char *rpc_get_active_endpoint_name ();
 
 typedef RPC_ASYNC_STATE RpcAsyncCall;
 
