@@ -35,7 +35,6 @@ def check (bld):
 
 	server_path = os.path.join (bld.path.get_bld().abspath(), 'server.exe')
 	client_path = os.path.join (bld.path.get_bld().abspath(), 'client.exe')
+	rogue_client_path = os.path.join (bld.path.get_bld().abspath(), 'rogue-client.exe')
 
-	bld.run_tester ("per-user", "--multiuser %s %s" % (server_path, client_path))
-
-
+	bld.run_tester ("per-user", "--multiuser %s %s %s" % (server_path, client_path, rogue_client_path))

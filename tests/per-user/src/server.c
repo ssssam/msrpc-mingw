@@ -87,6 +87,7 @@ int main (int argc, char **argv) {
 		rpc_log_error_from_status (GetLastError ());
 
 	printf ("server: listening (as user '%s')\n", user_name);
+	printf ("server: endpoint name: %s\n", rpc_get_active_endpoint_name ());
 	fflush (stdout);
 
 	LocalFree (user_name);

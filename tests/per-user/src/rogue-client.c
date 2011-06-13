@@ -17,43 +17,24 @@ int main (int   argc,
 	RPC_STATUS     status;
 	DWORD          length;
 	unsigned char *string_binding = NULL;
-	const char    *victim_user_name;
-	SID           *victim_sid;
-	SID_NAME_USE   victim_account_type;
 	char          *endpoint_name;
 	char          *message = NULL;
 
-	if (argc != 2) {
-		printf ("Usage: rogue-client VICTIM_USER_NAME\n");
+	if (argc < 2) {
+		printf ("Usage: rogue-client ENDPOINT\n");
 		exit (255);
 	}
-
-	/*victim_user_name = argv[1];
-
-	victim_sid = malloc (48);
-	length = 48;
-	success = LookupAccountName (NULL,
-	                             victim_user_name,
-	                             victim_sid,
-	                             &length,
-	                             NULL,
-	                             0,
-	                             &victim_account_type);
-
-	if (! success)
-		rpc_log_error_from_status (GetLastError ());*/
-
-	printf ("got sid: %x\n", victim_sid);
 
 	/* Manually try to bind to the given endpoint, so we can
 	 * try to break in to another user's RPC server.
 	 */
 
-	return;
-
 	rpc_init ();
 
-	status = RpcStringBindingCompose (NULL, "ncalrpc", NULL, (LPSTR)endpoint_name,
+	printf ("client: binding to %s\n", argv[1]);
+
+	status = RpcStringBindingCompose (NULL, "ncalrpc",
+	                                  NULL, argv[1],
 	                                  NULL, &string_binding);
 
 	if (status)
@@ -66,17 +47,24 @@ int main (int   argc,
 
 	RpcStringFree (&string_binding);
 
-	/* This is actually done automatically for us */
-
-	/*status = RpcBindingSetAuthInfo (*interface_handle,
+	status = RpcBindingSetAuthInfo (per_user_rpc_interface_handle,
 	                                NULL,
 	                                RPC_C_AUTHN_LEVEL_PKT_PRIVACY,
 	                                RPC_C_AUTHN_WINNT,
 	                                NULL,
 	                                0);
 
-	if (status) {
-		rpc_log_error_from_status (status);*/
+	if (status)
+		rpc_log_error_from_status (status);
+
+	/* Check the server is listening */
+
+	status = RpcMgmtIsServerListening (per_user_rpc_interface_handle);
+
+	if (status)
+		rpc_log_error_from_status (status);
+
+	/* Make a call (on access denied, we will get an RPC_S_CALL_FAILED exception) */
 
 	tell_me_a_secret (&message);
 
