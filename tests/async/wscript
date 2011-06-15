@@ -7,21 +7,23 @@ def build (bld):
 	# msrpc-mingw/src
 	local_msrpc_include_path = bld.root.find_dir('src').relpath()
 
+	kws = {
+		'msrpc_interface': ['src/async.idl', 'src/async.acf'],
+		'use': 'msrpc-mingw',
+		'uselib': 'RPC',
+		'includes': [local_msrpc_include_path, src_dir.get_bld()],
+		'install_path': False
+	}
+
 	bld (features = 'c cprogram msrpc_client',
 	     source = 'src/client.c',
-	     msrpc_interface = ['src/async.idl', 'src/async.acf'],
 	     target = 'client',
-	     use = 'msrpc-mingw',
-	     uselib = 'RPC',
-	     includes = [local_msrpc_include_path, src_dir.get_bld()])
+	     **kws)
 
 	bld (features = 'c cprogram msrpc_server',
 	     source = 'src/server.c',
-	     msrpc_interface = ['src/async.idl', 'src/async.acf'],
 	     target = 'server',
-	     use = 'msrpc-mingw',
-	     uselib = 'RPC',
-	     includes = [local_msrpc_include_path, src_dir.get_bld()])
+	     **kws)
 
 def check (bld):
 	# FIXME: hardcoded because we don't execute the build() command so the

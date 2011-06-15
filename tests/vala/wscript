@@ -16,7 +16,8 @@ def build (bld):
 		'packages': ['gio-2.0', 'msrpc-1.0', 'vala-interface'],
 		'use': ['msrpc-glib2', 'msrpc-mingw'],
 		'uselib': 'RPC',
-		'includes': [local_msrpc_include_path, src_dir.get_bld()]
+		'includes': [local_msrpc_include_path, src_dir.get_bld()],
+		'install_path': False
 	}
 
 	bld (features = 'c cprogram msrpc_client',
