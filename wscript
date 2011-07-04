@@ -30,17 +30,25 @@ def configure(conf):
 	conf.env['LDFLAGS'] = '-Wl,--enable-auto-import'
 
 def build_libs (bld):
-	bld (features     = 'c cstlib',
-	     source       = 'src/msrpc-mingw.c',
-	     target       = 'msrpc-mingw',
-	     install_path = '${LIBDIR}')
+	msrpc_mingw_kws = {
+		'source': 'src/msrpc-mingw.c',
+		'target': 'msrpc-mingw',
+		'uselib': 'RPC',
+	}
 
-	bld (features     = 'c cstlib',
-	     # FIXME: does this work when called from outside base dir?
-	     source       = 'src/msrpc-glib2.c',
-	     target       = 'msrpc-glib2',
-	     uselib       = 'GLIB',
-	     install_path = '${LIBDIR}')
+	msrpc_glib2_kws = {
+		'source': 'src/msrpc-glib2.c',
+		'target': 'msrpc-glib2',
+		'use': 'msrpc-mingw',
+		'uselib': 'GLIB RPC',
+	}
+
+	bld (features = 'c cstlib', install_path = '${LIBDIR}', **msrpc_mingw_kws);
+	bld (features = 'c cshlib', install_path = '${BINDIR}', **msrpc_mingw_kws);
+
+	bld (features = 'c cstlib', install_path = '${LIBDIR}', **msrpc_glib2_kws);
+	bld (features = 'c cshlib', install_path = '${BINDIR}', **msrpc_glib2_kws);
+
 
 def build(bld):
 	build_libs (bld)
