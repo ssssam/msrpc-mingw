@@ -1,8 +1,5 @@
-// I have no idea what this is about.
-// See: http://msdn.microsoft.com/en-us/library/aa378702%28v=VS.85%29.aspx
 [
   implicit_handle (handle_t hello_IfHandle)
-
 ]
 interface hello
 {
