@@ -11,6 +11,10 @@ def options(opt):
 	opt.tool_options('gcc gnu_dirs msrpc')
 
 def configure(conf):
+	# msrpc.py is normally used by users of the library; for our
+	# purposes we want to force use of the in-tree version
+	conf.env['MIDL_WRAPPER'] = os.path.abspath('bin/midl-wrapper')
+
 	conf.check_tool ('gcc gnu_dirs msrpc')
 
 	conf.check_cfg (package='glib-2.0', uselib_store='GLIB', args=['--cflags', '--libs'])
