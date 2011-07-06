@@ -100,23 +100,23 @@ void rpc_set_global_exception_handler_enable (int enable);
  *    http://www.opensource.apple.com/source/tcl/tcl-87/tk/tk/win/tkWin32Dll.c
  */
 
-struct RpcExceptionClosure {
+struct _RpcExceptionClosure {
 	jmp_buf return_location;
 	DWORD   status;
 };
 
-extern DWORD __rpc_exception_handler_tls_index;
+void _rpc_set_thread_exception_closure (struct _RpcExceptionClosure *closure);
 
 #define RPC_TRY_EXCEPT { \
-	struct RpcExceptionClosure *__rpc_exception_closure; \
-	__rpc_exception_closure = malloc (sizeof (struct RpcExceptionClosure)); \
+	struct _RpcExceptionClosure *__rpc_exception_closure; \
+	__rpc_exception_closure = malloc (sizeof (struct _RpcExceptionClosure)); \
 	if (setjmp (__rpc_exception_closure->return_location) == 0) { \
-		TlsSetValue (__rpc_exception_handler_tls_index, __rpc_exception_closure);
+		_rpc_set_thread_exception_closure (__rpc_exception_closure);
 
 #define RPC_EXCEPT } else
 
 #define RPC_END_EXCEPT \
-	TlsSetValue (__rpc_exception_handler_tls_index, NULL); \
+	_rpc_set_thread_exception_closure (NULL); \
 	free (__rpc_exception_closure); \
 }
 

@@ -138,13 +138,13 @@ void rpc_log_error_with_status (DWORD       status,
 
 static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers);
 
-DWORD __rpc_exception_handler_tls_index;
+static DWORD exception_handler_tls_index;
 static int   exception_handler_enable_global;
 
 static LPTOP_LEVEL_EXCEPTION_FILTER super_exception_handler;
 
 static void exception_handler_init () {
-	__rpc_exception_handler_tls_index = TlsAlloc ();
+	exception_handler_tls_index = TlsAlloc ();
 	exception_handler_enable_global = TRUE;
 	super_exception_handler = SetUnhandledExceptionFilter (exception_handler);
 }
@@ -154,15 +154,19 @@ void rpc_set_global_exception_handler_enable (int enable) {
 	exception_handler_enable_global = enable;
 }
 
+void _rpc_set_thread_exception_closure (struct _RpcExceptionClosure *closure) {
+	TlsSetValue (exception_handler_tls_index, closure);
+}
+
 static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers) {
-	struct RpcExceptionClosure *closure;
+	struct _RpcExceptionClosure *closure;
 	LPEXCEPTION_RECORD exception;
 	DWORD status;
 
 	exception = exception_pointers->ExceptionRecord;
 	status = exception->ExceptionCode;
 
-	closure = TlsGetValue (__rpc_exception_handler_tls_index);
+	closure = TlsGetValue (exception_handler_tls_index);
 
 	if (closure != NULL) {
 		/* Local exception handler - jump back into the action */
