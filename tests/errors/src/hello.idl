@@ -1,0 +1,8 @@
+[
+  uuid(39084948-f145-4b3e-bdc0-1970dc7f580a),
+  version(1.0)
+]
+interface hello
+{
+  void say_hello([in, string] const char *name);
+}

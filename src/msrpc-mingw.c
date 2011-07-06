@@ -51,11 +51,12 @@ static RPC_IF_HANDLE server_interface = NULL;
 
 /***********************************************************************
  * Logging
+ *
+ * All log functions are thread-safe.
  */
 
-static RpcLogFunction log_function = rpc_default_log_function;
-
-static LPTOP_LEVEL_EXCEPTION_FILTER super_exception_handler;
+static CRITICAL_SECTION log_mutex = { 0 };
+static RpcLogFunction   log_function = NULL;
 
 void rpc_default_log_function (unsigned int  status_code,
                                const char   *format,
@@ -64,30 +65,54 @@ void rpc_default_log_function (unsigned int  status_code,
 	exit (status_code);
 }
 
-void rpc_log_error             (const char *format, ...);
-void rpc_log_error_with_status (DWORD status, const char *format, ...);
-void rpc_log_error_from_status (DWORD status);
+static void log_init () {
+	InitializeCriticalSection (&log_mutex);
+
+	log_function = rpc_default_log_function;
+}
 
 void rpc_set_log_function (RpcLogFunction _log_function) {
+	EnterCriticalSection (&log_mutex);
+
 	log_function = _log_function;
+
+	LeaveCriticalSection (&log_mutex);
+}
+
+static void call_log_function_ul (unsigned int  status_code,
+                                  const char   *format,
+                                  va_list       args) {
+	if (log_function != NULL)
+		log_function (status_code, format, args);
 }
 
 void rpc_log_error (const char *format, ...) {
+	EnterCriticalSection (&log_mutex);
+
 	va_list args;
 	va_start (args, format);
-	log_function (1, format, args);
+	call_log_function_ul (1, format, args);
 	va_end (args);
+
+	LeaveCriticalSection (&log_mutex);
 }
 
 void rpc_log_error_from_status (DWORD status) {
 	char buffer[256];
+
+	EnterCriticalSection (&log_mutex);
+
 	FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, NULL, status, 0, (LPSTR)&buffer, 255, NULL);
-	log_function (status, buffer, NULL);
+	call_log_function_ul (status, buffer, NULL);
+
+	LeaveCriticalSection (&log_mutex);
 }
 
 void rpc_log_error_with_status (DWORD       status,
                                 const char *format, ...) {
 	char buffer1[256], *buffer2;
+
+	EnterCriticalSection (&log_mutex);
 
 	FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, NULL, status, 0, (LPSTR)&buffer1, 255, NULL);
 
@@ -98,29 +123,73 @@ void rpc_log_error_with_status (DWORD       status,
 
 	va_list args;
 	va_start (args, format);
-	log_function (status, buffer2, args);
+	call_log_function_ul (status, buffer2, args);
 	va_end (args);
 
 	free (buffer2);
+
+	LeaveCriticalSection (&log_mutex);
+}
+
+
+/***********************************************************************
+ * Exception handling
+ */
+
+static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers);
+
+DWORD __rpc_exception_handler_tls_index;
+static int   exception_handler_enable_global;
+
+static LPTOP_LEVEL_EXCEPTION_FILTER super_exception_handler;
+
+static void exception_handler_init () {
+	__rpc_exception_handler_tls_index = TlsAlloc ();
+	exception_handler_enable_global = TRUE;
+	super_exception_handler = SetUnhandledExceptionFilter (exception_handler);
+}
+
+void rpc_set_global_exception_handler_enable (int enable) {
+	/* Int access is atomic on Win32 */
+	exception_handler_enable_global = enable;
 }
 
 static LONG WINAPI exception_handler (LPEXCEPTION_POINTERS exception_pointers) {
-	LPEXCEPTION_RECORD exception = exception_pointers->ExceptionRecord;
+	struct RpcExceptionClosure *closure;
+	LPEXCEPTION_RECORD exception;
+	DWORD status;
 
-	if (exception->ExceptionCode == RPC_S_SERVER_UNAVAILABLE)
-		rpc_log_error ("RPC server is unavailable on endpoint '%s'\n",
-		               active_endpoint_name);
-	else
+	exception = exception_pointers->ExceptionRecord;
+	status = exception->ExceptionCode;
 
-	if (exception->ExceptionCode == ERROR_ACCESS_DENIED)
-		rpc_log_error ("Access denied to RPC endpoint '%s'\n",
-		               active_endpoint_name);
-	else
+	closure = TlsGetValue (__rpc_exception_handler_tls_index);
 
-	/* Filter for RPC errors - not perfect, but avoids too many false
-	 * positives. See winerror.h for the actual codes. */
-	if (exception->ExceptionCode & 0x1700)
-		rpc_log_error_from_status (exception->ExceptionCode);
+	if (closure != NULL) {
+		/* Local exception handler - jump back into the action */
+		closure->status = exception->ExceptionCode;
+		longjmp (closure->return_location, TRUE);
+	}
+
+	if (exception_handler_enable_global == TRUE) {
+		if (status == RPC_S_SERVER_UNAVAILABLE)
+			rpc_log_error_with_status (status,
+			                           "RPC server is unavailable on endpoint '%s'\n",
+			                           active_endpoint_name);
+		else
+
+		if (status == ERROR_ACCESS_DENIED)
+			rpc_log_error_with_status (status,
+			                           "Access denied to RPC endpoint '%s'\n",
+			                           active_endpoint_name);
+		else
+
+		/* Filter for RPC errors - not perfect, but avoids too many false
+		 * positives. See winerror.h for the actual codes. */
+		if (status & 0x1700)
+			rpc_log_error_from_status (status);
+
+		return EXCEPTION_CONTINUE_EXECUTION;
+	}
 
 	return super_exception_handler (exception_pointers);
 }
@@ -275,8 +344,6 @@ static __stdcall RPC_STATUS per_user_security_cb (RPC_IF_HANDLE  interface_spec,
 
 	authorized = EqualSid (client_user->User.Sid, server_user->User.Sid);
 
-	printf ("sid's match? %i\n", authorized);
-
 	HeapFree (GetProcessHeap (), 0, client_user);
 	HeapFree (GetProcessHeap (), 0, server_user);
 
@@ -299,7 +366,8 @@ void rpc_init () {
 	static int initialized = FALSE;
 
 	if (! initialized) {
-		super_exception_handler = SetUnhandledExceptionFilter (exception_handler);
+		log_init ();
+		exception_handler_init ();
 
 		initialized = TRUE;
 	}

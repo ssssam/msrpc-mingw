@@ -1,15 +1,12 @@
 [CCode (cprefix = "rpc_", cheader_filename = "msrpc-mingw.h")]
 
 namespace Rpc {
-
 	/* GLib integration */
 
-	[CCode (cname = "rpc_glib2_init")]
-	public void init ();
-
+	[CCode (cname = "rpc_g_log_function")]
+	public void log_function ();
 
 	/* Generic logging API */
-
 	[CCode (cname = "rpc_default_log_function")]
 	public void default_log_function (string domain, int errorlevel, string format, va_list args);
 

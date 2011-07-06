@@ -36,10 +36,10 @@
 
 #include "msrpc-mingw.h"
 
-/* msrpc-glib2 assists in using MS RPC with GLib. It handles reporting
- * errors using the GLib logger, and also provides memory allocation
- * functions using g_malloc and g_free (so you do not need to provide
+/* msrpc-glib2 assists in using MS RPC with GLib (and therefore Vala). You get
+ * a log function that can be passed to rpc_set_log_function, and memory
+ * management stubs using g_malloc and g_free (so you do not need to provide
  * your own MIDL_user_allocate() and MIDL_user_free() functions).
  */
 
-void rpc_glib2_init ();
+void rpc_g_log_function (unsigned int status, const char *format, va_list args);

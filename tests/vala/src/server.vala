@@ -72,8 +72,6 @@ public class ValaServer: Object {
 }
 
 public int main (string[] args) {
-	Rpc.init ();
-
 	var server = new ValaServer();
 
 	var main_loop = new MainLoop();

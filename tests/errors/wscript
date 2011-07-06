@@ -1,0 +1,37 @@
+import Logs
+import os
+
+def build (bld):
+	# msrpc-mingw/tests/errors/src
+	src_dir = bld.path.find_dir('src')
+
+	# msrpc-mingw/src
+	local_msrpc_include_path = bld.root.find_dir('src').relpath()
+
+	kws = {
+		'msrpc_interface': ['src/hello.idl', 'src/hello.acf'],
+		'use': 'msrpc-mingw',
+		'uselib': 'RPC',
+		'includes': [local_msrpc_include_path, src_dir.get_bld()],
+		'install_path': False
+	}
+
+	bld (features = 'c cprogram msrpc_client',
+	     source = 'src/errors.c',
+	     target = 'test-errors',
+	     **kws)
+
+
+def check (bld):
+	# FIXME: hardcoded because we don't execute the build() command so the
+	# actual targets do not exist
+
+	test_path = os.path.join (bld.path.get_bld().abspath(), 'test-errors.exe')
+
+	result = bld.exec_command ("%s" % test_path)
+
+	if result == 0:
+		Logs.info ("errors: PASSED")
+	else:
+		Logs.warn ("errors: FAILED")
+
