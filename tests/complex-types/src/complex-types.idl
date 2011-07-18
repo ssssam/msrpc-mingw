@@ -1,0 +1,18 @@
+[ 
+    uuid (2a49ffcb-b1aa-4ef2-b099-29d92e76eefe),
+    version(1.0),
+]
+interface complex_types
+{
+    const char *DEFAULT_ENDPOINT = "test-complex-types";
+
+    typedef struct {
+        [string] char *name;
+        int age;
+    } Person;
+
+    void test_call (int strings_length,
+                    [size_is(strings_length), in, string] char *strings[*],
+                    int people_length,
+                    [size_is(people_length), in] Person people[*]);
+}

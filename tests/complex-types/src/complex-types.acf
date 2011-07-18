@@ -1,0 +1,6 @@
+[
+  implicit_handle (handle_t complex_types_interface_handle)
+]
+interface complex_types
+{
+}

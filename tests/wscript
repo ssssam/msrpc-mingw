@@ -1,6 +1,7 @@
 def build (bld):
 	bld.recurse ('errors')
 	bld.recurse ('async')
+	bld.recurse ('complex-types')
 	bld.recurse ('per-user')
 
 	if bld.env['VALAC']:
@@ -9,6 +10,7 @@ def build (bld):
 def check (bld):
 	bld.recurse ('errors')
 	bld.recurse ('async')
+	bld.recurse ('complex-types')
 	bld.recurse ('per-user')
 
 	if bld.env['VALAC']:
