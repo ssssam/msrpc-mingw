@@ -3,12 +3,25 @@
 namespace Rpc {
 	/* GLib integration */
 
-	[CCode (cname = "rpc_g_log_function")]
-	public void log_function ();
+	[CCode (has_target = false)]
+	public delegate void LogFunction (uint    status_code,
+	                                  string  format,
+	                                  va_list args);
 
 	/* Generic logging API */
+	[CCode (cname = "rpc_g_log_function")]
+	public void g_log_function (uint    status_code,
+	                            string  format,
+	                            va_list args);
+
 	[CCode (cname = "rpc_default_log_function")]
-	public void default_log_function (string domain, int errorlevel, string format, va_list args);
+	public void default_log_function (uint    status_code,
+	                                  string  format,
+	                                  va_list args);
+
+
+	[CCode (cname = "rpc_set_log_function")]
+	public void set_log_function (Rpc.LogFunction log_function);
 
 	[CCode (cname = "rpc_log_error")]
 	[PrintfLike]
