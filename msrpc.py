@@ -17,11 +17,11 @@ import os
 from waflib import Task
 from waflib.TaskGen import before_method, feature, taskgen_method
 
-def header_already_exists(self, c_header):
+def task_output_already_exists(self, output):
 	for group in self.bld.groups:
 		for task_gen in group:
 			for task in getattr(task_gen, 'tasks', []):
-				if c_header in task.outputs:
+				if output in task.outputs:
 					return True
 	return False
 
@@ -41,13 +41,17 @@ def process_msrpc_interface(self, type):
 		c_stub_node = idl_file_node.change_ext('_s.c').get_bld()
 	elif type=='client':
 		c_stub_node = idl_file_node.change_ext('_c.c').get_bld()
-	output_list = [c_stub_node]
 
 	c_header = idl_file_node.change_ext('.h').get_bld()
 
-	# Identical header gets created by both client and server tasks;
-	# ignore it the second time or waf raises an error.
-	if not header_already_exists(self, c_header):
+	# Avoid any duplicate task errors - it's not invalid to have two
+	# client programs generated from the same .IDL file, for example,
+	# but we only need to generate the stub C code once.
+
+	output_list = []
+	if not task_output_already_exists(self, c_stub_node):
+		output_list.append (c_stub_node)
+	if not task_output_already_exists(self, c_header):
 		output_list.append (c_header) 
 
 	midl_task = self.create_task('midl', source_list, output_list)
