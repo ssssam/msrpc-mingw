@@ -9,6 +9,17 @@ Some documentation can be found in the src/msrpc-mingw.h and
 src/msrpc-glib2.h files.
 
 
+* Building:
+
+WARNING: do not try to build inside a path which contains spaces! This also
+applies to any project which uses midl-wrapper as part of its build process!
+
+./waf configure  (if MIDL.EXE is not found, set the MIDL enviroment variable
+                  to point to its location)
+./waf
+./waf install
+
+
 * Components:
 
 bin/midl-wrapper:
