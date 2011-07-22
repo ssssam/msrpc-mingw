@@ -1,3 +1,4 @@
+import waflib.Context
 import os
 
 def build (bld):
@@ -5,7 +6,7 @@ def build (bld):
 	src_dir = bld.path.find_dir('src')
 
 	# msrpc-mingw/src
-	local_msrpc_include_path = bld.root.find_dir('src').relpath()
+	local_msrpc_include_path = os.path.join(waflib.Context.top_dir, 'src')
 
 	# msrpc-mingw/src
 	vapi_path = bld.root.find_dir('vapi').abspath()
