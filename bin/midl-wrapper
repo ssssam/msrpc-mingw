@@ -105,7 +105,7 @@ TMP=/tmp
 
 RESULT=${PIPESTATUS[0]}
 if [ $RESULT -ne 0 ]; then
-  rm -f ${base}_c.c ${base}_s.s ${base}.h
+  rm -f "${base}_c.c" "${base}_s.s" "${base}.h"
   exit $RESULT
 fi
 
@@ -114,5 +114,9 @@ fi
 # file. This (understandably) confuses gcc.
 FIX_FORWARD_DECLS="s/extern const/static const/"
 
-sed -i -e "$FIX_FORWARD_DECLS" "${base}_c.c"
-sed -i -e "$FIX_FORWARD_DECLS" "${base}_s.c"
+# Can't use sed -i: I think there's an MSYS bug involved.
+mv "${base}_c.c" "${base}_c.tmp"
+mv "${base}_s.c" "${base}_s.tmp"
+cat "${base}_c.tmp" | sed -e "$FIX_FORWARD_DECLS" > "${base}_c.c"
+cat "${base}_s.tmp" | sed -e "$FIX_FORWARD_DECLS" > "${base}_s.c"
+rm -f "${base}_c.tmp" "${base}_s.tmp"
