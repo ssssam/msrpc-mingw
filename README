@@ -93,7 +93,11 @@ Watch out for the following little traps that the API has in store:
 * Testing:
 
 To run the automated tests, make sure the build is up to date by running
-'./waf' and then run './waf check'.
+'./waf'; install the library by running './waf install' and then run
+'./waf check'.
+
+FIXME: currently the tester will hang if you don't have the libraries
+installed.
 
 To test multi-user security, the rpctester program needs a dummy account
 set up. This must be done manually: first, go to Control Panel > User

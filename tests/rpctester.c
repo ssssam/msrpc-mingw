@@ -30,6 +30,12 @@
  * SUCH DAMAGE.
  *
  * Author: Sam Thursfield <samthursfield@codethink.co.uk>
+ *
+ * Known bugs:
+ *   * If a test program exits with failure by the time we have called
+ *     ReadFile() on its pipe, the tester will block indefinitely. We
+ *     need some sort of timer callback, since SetCommTimeouts() does
+ *     not work here.
  */
 
 #include <windows.h>
