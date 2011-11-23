@@ -57,8 +57,13 @@ if [ "$MIDL" = "" ]; then
   MIDL=midl.exe
 fi
 
-if [ ! -x "$MIDL" ]; then
+if [ ! -e "$MIDL" ]; then
   echo "Unable to locate $MIDL"
+  exit 2
+fi
+
+if [ ! -x "$MIDL" ]; then
+  echo "Not an executable: $MIDL"
   exit 2
 fi
 
@@ -89,7 +94,6 @@ fi
 
 # Setting TMP in MSYS breaks MIDL.EXE (and other things)
 TMP=/tmp
-
 
 "$MIDL" $MIDL_OPTIONS $idl_file | sed -e /^Processing.*/d
 

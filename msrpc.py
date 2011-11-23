@@ -82,7 +82,7 @@ class midl(Task.Task):
 
 def configure(conf):
 	conf.find_program('midl-wrapper', var='MIDL_WRAPPER')
-	conf.find_program('midl', var='MIDL')
+	conf.find_program('midl', var='MIDL', path_list=['c:/Program Files/Microsoft SDKs/Windows/v7.0/Bin'])
 
 
 # Auxiliary function
