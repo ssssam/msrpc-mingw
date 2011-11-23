@@ -1,6 +1,7 @@
 import Logs
 
 import os
+import string
 
 APPNAME = 'msrpc-mingw'
 VERSION = '0.1.0'
@@ -67,11 +68,21 @@ def build(bld):
 	bld.install_files('${INCLUDEDIR}', 'src/msrpc-glib2.h')
 
 	if bld.is_install:
-		bld (rule="""sed -e 's#@prefix@#${PREFIX}#' -e 's#@libdir@#${LIBDIR}#' -e 's#@bindir@#${BINDIR}#' -e 's#@version@#%s#' < ${SRC} > ${TGT}""" % VERSION,
+		# Write the .pc files, making sure we use MSYS (UNIX) format
+		# paths to avoid confusing 'sed' with the backslashes.
+
+		def to_msys (path):
+			path_norm = os.path.normpath (path)
+			return string.replace (path_norm, '\\', '/')
+
+		sed_pc_rule = """sed -e 's#@prefix@#%s#' -e 's#@libdir@#%s#' -e 's#@bindir@#%s#' -e 's#@version@#%s#' < ${SRC} > ${TGT}""" % \
+		              (to_msys(bld.env['PREFIX']), to_msys(bld.env['LIBDIR']), to_msys(bld.env['BINDIR']), VERSION)
+
+		bld (rule=sed_pc_rule,
 		     source='msrpc-mingw-1.0.pc.in',
 		     target='msrpc-mingw-1.0.pc',
 		     install_path='${LIBDIR}/pkgconfig')
-		bld (rule="""sed -e 's#@prefix@#${PREFIX}#' -e 's#@libdir@#${LIBDIR}#' -e 's#@bindir@#${BINDIR}#' -e 's#@version@#%s#' < ${SRC} > ${TGT}""" % VERSION,
+		bld (rule=sed_pc_rule,
 		     source='msrpc-glib2-1.0.pc.in',
 		     target='msrpc-glib2-1.0.pc',
 		     install_path='${LIBDIR}/pkgconfig')
