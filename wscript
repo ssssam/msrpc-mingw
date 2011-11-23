@@ -55,6 +55,12 @@ def build_libs (bld):
 
 
 def build(bld):
+	# FIXME: the MIDL task currently runs MIDL.EXE twice. The same header
+	# and C code is generated each time; you can disable one C file each
+	# time, but not the header. For this reason we have to disable
+	# parallel compile, or the processes trip over each other.
+	bld.jobs = 1
+
 	build_libs (bld)
 
 	bld.install_files('${INCLUDEDIR}', 'src/msrpc-mingw.h')
