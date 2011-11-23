@@ -16,8 +16,10 @@
 # Note: this mode requires functions which are missing from old versions
 # of mingw w32api package. If you're getting link errors for missing
 # NdrServerCall2() etc., one solution is to use -Oi. A better one is to
-# use w32api 3.17.3 or better (FIXME: not yet released, I have a patch
-# pending which hopefully will go in this release).
+# wait for the following mingw bug to be closed:
+#
+#   https://sourceforge.net/tracker/?func=detail&aid=3302807&group_id=2435&atid=302435
+#
 MIDL_STUB_MODE="-Oicf"
 
 # Generate C code using GNU cpp to avoid requiring MSVC.
@@ -87,7 +89,6 @@ if [ -n "$output_path" ] && [ "$output_path" != "" ]; then
 fi
 
 
-
 ##
 ## Execution
 ##
@@ -96,6 +97,7 @@ fi
 TMP=/tmp
 
 "$MIDL" $MIDL_OPTIONS $idl_file | sed -e /^Processing.*/d
+
 
 ##
 ## Fixing up output
