@@ -544,6 +544,8 @@ int main (int   argc,
 		exit (255);
 	};
 
+	rpc_init ();
+
 	switch (options.test_mode) {
 		case TEST_STANDARD:
 			test_standard (options);
